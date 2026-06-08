@@ -1078,51 +1078,22 @@ function ReportsTab({ products, onSessionClose }: { products: Product[], onSessi
         <h3 className="text-sm font-bold text-stone-400 uppercase tracking-widest mb-4">Historial de Jornadas</h3>
         <div className="space-y-3">
           {history.map(session => (
-            <div key={session.id} className="bg-white p-4 rounded-2xl border border-stone-200 flex items-center justify-between">
-                  <div>
-                    <label className="text-[10px] uppercase font-bold text-stone-400 mb-1 block">Foto del producto</label>
-                    <div className="flex gap-3 items-center">
-                      {formImage ? (
-                        <div className="relative">
-                          <img src={formImage} alt="Vista previa" className="w-24 h-24 object-cover rounded-xl bg-stone-100" />
-                          <button
-                            type="button"
-                            onClick={() => setFormImage(null)}
-                            className="absolute -top-2 -right-2 bg-rose-500 text-white p-1 rounded-full hover:bg-rose-600"
-                          >
-                            <X size={14} />
-                          </button>
-                        </div>
-                      ) : (
-                        <div className="flex gap-2">
-                          <button
-                            type="button"
-                            onClick={takePhoto}
-                            className="flex flex-col items-center justify-center w-24 h-24 bg-emerald-50 rounded-xl cursor-pointer hover:bg-emerald-100 transition-colors border-2 border-emerald-200"
-                          >
-                            <CameraIcon size={32} className="text-emerald-500" />
-                            <span className="text-[10px] text-emerald-600 mt-1 font-bold">📷 Tomar foto</span>
-                          </button>
-                          <button
-                            type="button"
-                            onClick={selectFile}
-                            className="flex flex-col items-center justify-center w-24 h-24 bg-blue-50 rounded-xl cursor-pointer hover:bg-blue-100 transition-colors border-2 border-blue-200"
-                          >
-                            <ImageIcon size={32} className="text-blue-500" />
-                            <span className="text-[10px] text-blue-600 mt-1 font-bold">📁 Seleccionar</span>
-                          </button>
-                        </div>
-                      )}
-                    </div>
+            <React.Fragment key={session.id}>
+              <div className="bg-white p-4 rounded-2xl border border-stone-200 flex items-center justify-between">
+                <div>
+                  <div className="font-bold text-stone-800">Jornada #{session.id}</div>
+                  <div className="text-[10px] text-stone-400">
+                    Cerrada: {session.end_time ? format(new Date(session.end_time), 'dd/MM/yyyy HH:mm') : 'N/A'}
                   </div>
+                </div>
+                <button 
+                  onClick={() => exportSessionExcel(session.id, format(new Date(session.end_time || ''), 'yyyy-MM-dd'))}
+                  className="text-emerald-600 p-2 bg-emerald-50 rounded-xl active:scale-90 transition-transform"
+                >
+                  <FileSpreadsheet size={20} />
+                </button>
               </div>
-              <button 
-                onClick={() => exportSessionExcel(session.id, format(new Date(session.end_time || ''), 'yyyy-MM-dd'))}
-                className="text-emerald-600 p-2 bg-emerald-50 rounded-xl active:scale-90 transition-transform"
-              >
-                <FileSpreadsheet size={20} />
-              </button>
-            </div>
+            </React.Fragment>
           ))}
           {history.length === 0 && (
             <div className="text-center py-8 text-stone-400 text-sm italic">Aún no hay jornadas cerradas</div>
