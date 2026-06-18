@@ -37,19 +37,21 @@ jobs:
           npx cap add android
           npx cap sync android
 
-      # Cambiar el nombre de la app dinámicamente
-      - name: Change App Name
+      # Decode Keystore
+      - name: Decode Keystore
+        run: |
+          echo "${{ secrets.ANDROID_KEYSTORE_BASE64 }}" | base64 -d > android/my-upload-key.keystore
+
+      # Cambiar el nombre de la app dinámicamente y la versión
+      - name: Update App Name and Version
         run: |
           sed -i 's/<string name="app_name">.*<\/string>/<string name="app_name">Ventas Lee<\/string>/g' android/app/src/main/res/values/strings.xml
+          sed -i 's/versionCode .*/versionCode ${{ github.run_number }}/' android/app/build.gradle
 
-      # Permisos para Filesystem (necesarios para manejar archivos Excel)
+      # Permisos para Filesystem
       - name: Add Permissions
         run: |
           sed -i '/<application/i \    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />\n    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />' android/app/src/main/AndroidManifest.xml
-
-      - name: Generate Signing Key
-        run: |
-          keytool -genkey -v -keystore android/debug.keystore -alias androiddebugkey -keyalg RSA -keysize 2048 -validity 10000 -storepass android -keypass android -dname "CN=Android Debug, O=Android, C=US"
 
       - name: Build APK
         run: |
@@ -60,7 +62,7 @@ jobs:
       - name: Sign APK
         run: |
           sudo apt-get install -y apksigner
-          apksigner sign --ks android/debug.keystore --ks-pass pass:android --out android/app/build/outputs/apk/release/app-signed.apk android/app/build/outputs/apk/release/app-release-unsigned.apk
+          apksigner sign --ks android/my-upload-key.keystore --ks-key-alias ${{ secrets.ANDROID_KEY_ALIAS }} --ks-pass pass:${{ secrets.ANDROID_KEY_PASSWORD }} --key-pass pass:${{ secrets.ANDROID_KEY_PASSWORD }} --out android/app/build/outputs/apk/release/app-signed.apk android/app/build/outputs/apk/release/app-release-unsigned.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
