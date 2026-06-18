@@ -47,14 +47,18 @@ class DataTransferService {
       json[sheetName] = XLSX.utils.sheet_to_json(wb.Sheets[sheetName]);
     });
 
-    // Clear existing data
+    // Disable foreign keys for safe import
+    await dbService.run(`PRAGMA foreign_keys = OFF;`);
+
+    // Clear existing data in reverse order of dependency
     const tables = ['sale_items', 'payments', 'sales', 'movements', 'sessions', 'products', 'customers', 'settings'];
     for (const table of tables) {
       await dbService.run(`DELETE FROM ${table};`);
     }
 
-    // Import data
-    for (const table of tables) {
+    // Import data in dependency order
+    const importOrder = ['settings', 'customers', 'sessions', 'products', 'sales', 'payments', 'sale_items', 'movements'];
+    for (const table of importOrder) {
       const rows = json[table] || [];
       for (const row of rows) {
         const columns = Object.keys(row);
@@ -64,6 +68,9 @@ class DataTransferService {
         await dbService.run(sql, values);
       }
     }
+
+    // Re-enable foreign keys
+    await dbService.run(`PRAGMA foreign_keys = ON;`);
   }
 }
 
