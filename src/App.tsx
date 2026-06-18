@@ -1324,7 +1324,7 @@ export default function App() {
   return (
     <div className="min-h-screen min-h-[100dvh] bg-stone-100 font-sans text-stone-900 pb-safe">
       <header className="bg-white border-b border-stone-200 p-4 pt-safe sticky top-0 z-30 shadow-sm">
-        <div className="w-full max-w-md mx-auto flex justify-between items-center">
+        <div className="w-full max-w-md md:max-w-3xl lg:max-w-5xl mx-auto flex justify-between items-center">
           <h1 className="text-xl font-bold tracking-tight text-stone-800">VentasPro</h1>
           <div className="flex items-center gap-2">
             <div className={cn(
@@ -1338,7 +1338,7 @@ export default function App() {
         </div>
       </header>
 
-      <main className="w-full max-w-md mx-auto p-4 pb-24">
+      <main className="w-full max-w-md md:max-w-3xl lg:max-w-5xl mx-auto p-4 pb-24">
         <AnimatePresence mode="wait">
           {activeTab === 'vender' && (
             <motion.div
@@ -1480,7 +1480,7 @@ export default function App() {
             exit={{ y: 100 }}
             className="fixed bottom-[calc(64px+env(safe-area-inset-bottom))] left-0 right-0 p-4 z-30 pointer-events-none"
           >
-            <div className="max-w-md mx-auto pointer-events-auto">
+            <div className="max-w-md md:max-w-3xl lg:max-w-5xl mx-auto pointer-events-auto">
               <button 
                 onClick={() => setShowCartModal(true)}
                 className="w-full bg-stone-900 text-white p-4 rounded-2xl shadow-2xl flex justify-between items-center active:scale-95 transition-transform"
