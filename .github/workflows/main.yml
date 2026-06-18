@@ -62,10 +62,10 @@ jobs:
       - name: Sign APK
         run: |
           sudo apt-get install -y apksigner
-          apksigner sign --ks android/my-upload-key.keystore --ks-key-alias ${{ secrets.ANDROID_KEY_ALIAS }} --ks-pass pass:${{ secrets.ANDROID_KEY_PASSWORD }} --key-pass pass:${{ secrets.ANDROID_KEY_PASSWORD }} --out android/app/build/outputs/apk/release/app-signed.apk android/app/build/outputs/apk/release/app-release-unsigned.apk
+          apksigner sign --ks android/my-upload-key.keystore --ks-key-alias ${{ secrets.ANDROID_KEY_ALIAS }} --ks-pass pass:${{ secrets.ANDROID_KEY_PASSWORD }} --key-pass pass:${{ secrets.ANDROID_KEY_PASSWORD }} --out android/app/build/outputs/apk/release/App_de_Ventas_v${{ github.run_number }}.apk android/app/build/outputs/apk/release/app-release-unsigned.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: App-Ventas-Firmada
-          path: android/app/build/outputs/apk/release/app-signed.apk
+          name: App_de_Ventas_v${{ github.run_number }}
+          path: android/app/build/outputs/apk/release/App_de_Ventas_v${{ github.run_number }}.apk
