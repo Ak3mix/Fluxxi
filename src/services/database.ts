@@ -47,6 +47,16 @@ class DatabaseService {
         console.log('Adding column "card_id" to "payments" table...');
         await this.db.execute('ALTER TABLE payments ADD COLUMN card_id INTEGER;');
       }
+
+      // Sales table fix: add card_id
+      const saleResult = await this.db.query('PRAGMA table_info(sales);');
+      const saleColumns = saleResult.values || [];
+      const hasSaleCardId = saleColumns.some((col: any) => col.name === 'card_id');
+      
+      if (!hasSaleCardId) {
+        console.log('Adding column "card_id" to "sales" table...');
+        await this.db.execute('ALTER TABLE sales ADD COLUMN card_id INTEGER;');
+      }
     } catch (error) {
       console.error('Error fixing schema:', error);
     }

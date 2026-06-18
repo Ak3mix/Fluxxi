@@ -18,8 +18,8 @@ export const SalesRepository = {
   async createSale(sale: any) {
     const timestamp = sale.timestamp || new Date().toISOString();
     const result = await dbService.run(
-      'INSERT INTO sales (customer_id, total, payment_method, status, created_at, session_id) VALUES (?, ?, ?, ?, ?, ?)',
-      [sale.customer_id, sale.total, sale.payment_method, sale.status, timestamp, sale.session_id]
+      'INSERT INTO sales (customer_id, total, payment_method, status, created_at, session_id, card_id) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      [sale.customer_id, sale.total, sale.payment_method, sale.status, timestamp, sale.session_id, sale.card_id]
     );
     const saleId = result.changes?.lastId;
 
