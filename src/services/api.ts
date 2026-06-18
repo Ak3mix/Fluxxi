@@ -1,8 +1,9 @@
 
-// TEST EDIT
 import { ProductRepository } from './repositories/productRepository';
 import { SalesRepository } from './repositories/salesRepository';
 import { MovementRepository } from './repositories/movementRepository';
+import { CardRepository } from './repositories/cardRepository';
+import { dbService } from './database';
 
 export const api = {
   async getProducts() {
@@ -19,6 +20,19 @@ export const api = {
 
   async deleteProduct(id: number) {
     return ProductRepository.delete(id);
+  },
+
+  async getCards() {
+    return CardRepository.getAll();
+  },
+  async addCard(card: any) {
+    return CardRepository.add(card);
+  },
+  async updateCard(id: number, card: any) {
+    return CardRepository.update(id, card);
+  },
+  async deleteCard(id: number) {
+    return CardRepository.delete(id);
   },
 
   async moveInventory(move: any) {

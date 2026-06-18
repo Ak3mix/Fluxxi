@@ -27,15 +27,25 @@ class DatabaseService {
 
   private async fixSchema() {
     try {
-      const result = await this.db.query('PRAGMA table_info(products);');
-      const columns = result.values || [];
-      const hasOldColumn = columns.some((col: any) => col.name === 'stocks');
-      const hasNewColumn = columns.some((col: any) => col.name === 'stock');
+      // Products table fix
+      const prodResult = await this.db.query('PRAGMA table_info(products);');
+      const prodColumns = prodResult.values || [];
+      const hasOldStock = prodColumns.some((col: any) => col.name === 'stocks');
+      const hasNewStock = prodColumns.some((col: any) => col.name === 'stock');
       
-      if (hasOldColumn && !hasNewColumn) {
+      if (hasOldStock && !hasNewStock) {
         console.log('Renaming column "stocks" to "stock" in "products" table...');
         await this.db.execute('ALTER TABLE products RENAME COLUMN stocks TO stock;');
-        console.log('Column renamed successfully.');
+      }
+
+      // Payments table fix: add card_id
+      const payResult = await this.db.query('PRAGMA table_info(payments);');
+      const payColumns = payResult.values || [];
+      const hasCardId = payColumns.some((col: any) => col.name === 'card_id');
+      
+      if (!hasCardId) {
+        console.log('Adding column "card_id" to "payments" table...');
+        await this.db.execute('ALTER TABLE payments ADD COLUMN card_id INTEGER;');
       }
     } catch (error) {
       console.error('Error fixing schema:', error);
@@ -114,6 +124,13 @@ class DatabaseService {
         timestamp TEXT,
         FOREIGN KEY(product_id) REFERENCES products(id),
         FOREIGN KEY(session_id) REFERENCES sessions(id)
+      );`,
+      `CREATE TABLE IF NOT EXISTS cards (
+        id INTEGER PRIMARY KEY AUTOINCREMENT,
+        name TEXT NOT NULL,
+        bank TEXT,
+        account_number TEXT,
+        deleted INTEGER DEFAULT 0
       );`,
       `CREATE TABLE IF NOT EXISTS settings (
         key TEXT PRIMARY KEY,

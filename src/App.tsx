@@ -102,6 +102,7 @@ function NavButton({ active, onClick, icon, label }: { active: boolean, onClick:
 }
 
 function InventoryTab({ products, onUpdate }: { products: Product[], onUpdate: () => void }) {
+  const [activeInventoryTab, setActiveInventoryTab] = useState<'products' | 'cards'>('products');
   const [showAddProduct, setShowAddProduct] = useState(false);
   const [showEditProduct, setShowEditProduct] = useState<Product | null>(null);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState<Product | null>(null);
@@ -111,6 +112,21 @@ function InventoryTab({ products, onUpdate }: { products: Product[], onUpdate: (
   const [moveType, setMoveType] = useState<'entry' | 'waste'>('entry');
   const [moveQty, setMoveQty] = useState(1);
   const [moveReason, setMoveReason] = useState('');
+  
+  const [cards, setCards] = useState<any[]>([]);
+  const [showAddCard, setShowAddCard] = useState(false);
+  const [cardFormName, setCardFormName] = useState('');
+  const [cardFormBank, setCardFormBank] = useState('');
+  const [cardFormAccount, setCardFormAccount] = useState('');
+
+  const fetchCards = async () => {
+    const data = await api.getCards();
+    setCards(data);
+  };
+
+  useEffect(() => {
+    fetchCards();
+  }, []);
 
   // Form states
   const [formName, setFormName] = useState('');
@@ -395,55 +411,70 @@ function InventoryTab({ products, onUpdate }: { products: Product[], onUpdate: (
 
   return (
     <div className="space-y-6 pb-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-2xl font-black text-stone-900">Inventario</h2>
-        <div className="flex gap-2">
-          <button 
-            onClick={async () => {
-              try {
-                await dataTransferService.exportDatabase();
-                alert('Exportación exitosa');
-              } catch (e) {
-                console.error(e);
-                alert('Error al exportar');
-              }
-            }}
-            className="bg-stone-100 text-stone-900 p-2 rounded-xl active:scale-95 transition-transform"
-            title="Exportar Datos"
-          >
-            <FileSpreadsheet size={20} />
-          </button>
-          <button 
-            onClick={async () => {
-              try {
-                const result = await FilePicker.pickFiles({ types: ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'], multiple: false });
-                if (result.files.length > 0) {
-                  const file = result.files[0];
-                  // Use Capacitor Filesystem to read file
-                  const fileRead = await Filesystem.readFile({ path: file.path! });
-                  
-                  await dataTransferService.importDatabase(fileRead.data as string);
-                  alert('Importación exitosa, la app se reiniciará');
-                  window.location.reload();
-                }
-              } catch (e) {
-                console.error(e);
-                alert('Error al importar');
-              }
-            }}
-            className="bg-stone-100 text-stone-900 p-2 rounded-xl active:scale-95 transition-transform"
-            title="Importar Datos"
-          >
-            <ArrowDownCircle size={20} />
-          </button>
-          <button 
-            onClick={() => { setShowAddProduct(true); }}
-            className="bg-stone-900 text-white p-2 rounded-xl shadow-lg active:scale-95 transition-transform shrink-0"
-          >
-            <Plus size={20} />
-          </button>
-        </div>
+      {/* Tab Selector */}
+      <div className="flex p-1 bg-stone-100 rounded-xl">
+        <button 
+          onClick={() => setActiveInventoryTab('products')}
+          className={cn("flex-1 py-2 text-xs font-bold rounded-lg transition-all", activeInventoryTab === 'products' ? "bg-white shadow" : "text-stone-500")}
+        >Productos</button>
+        <button 
+          onClick={() => setActiveInventoryTab('cards')}
+          className={cn("flex-1 py-2 text-xs font-bold rounded-lg transition-all", activeInventoryTab === 'cards' ? "bg-white shadow" : "text-stone-500")}
+        >Tarjetas</button>
       </div>
+
+      {activeInventoryTab === 'products' ? (
+        <>
+          <div className="flex justify-between items-center">
+            <h2 className="text-2xl font-black text-stone-900">Inventario</h2>
+            <div className="flex gap-2">
+              <button 
+                onClick={async () => {
+                  try {
+                    await dataTransferService.exportDatabase();
+                    alert('Exportación exitosa');
+                  } catch (e) {
+                    console.error(e);
+                    alert('Error al exportar');
+                  }
+                }}
+                className="bg-stone-100 text-stone-900 p-2 rounded-xl active:scale-95 transition-transform"
+                title="Exportar Datos"
+              >
+                <FileSpreadsheet size={20} />
+              </button>
+              <button 
+                onClick={async () => {
+                  try {
+                    const result = await FilePicker.pickFiles({ types: ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'], multiple: false });
+                    if (result.files.length > 0) {
+                      const file = result.files[0];
+                      // Use Capacitor Filesystem to read file
+                      const fileRead = await Filesystem.readFile({ path: file.path! });
+                      
+                      await dataTransferService.importDatabase(fileRead.data as string);
+                      alert('Importación exitosa, la app se reiniciará');
+                      window.location.reload();
+                    }
+                  } catch (e) {
+                    console.error(e);
+                    alert('Error al importar');
+                  }
+                }}
+                className="bg-stone-100 text-stone-900 p-2 rounded-xl active:scale-95 transition-transform"
+                title="Importar Datos"
+              >
+                <ArrowDownCircle size={20} />
+              </button>
+              <button 
+                onClick={() => { setShowAddProduct(true); }}
+                className="bg-stone-900 text-white p-2 rounded-xl shadow-lg active:scale-95 transition-transform shrink-0"
+              >
+                <Plus size={20} />
+              </button>
+            </div>
+          </div>
+          {/* ...existing product list... */}
 
       <div className="space-y-3">
         {products
