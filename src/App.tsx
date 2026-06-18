@@ -24,6 +24,7 @@ import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Share } from '@capacitor/share';
 import { Capacitor } from '@capacitor/core';
 import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
+import { dataTransferService } from './services/dataTransferService';
 import { FilePicker } from '@capawesome/capacitor-file-picker';
 import { format } from 'date-fns';
 import { clsx, type ClassValue } from 'clsx';
@@ -396,12 +397,52 @@ function InventoryTab({ products, onUpdate }: { products: Product[], onUpdate: (
     <div className="space-y-6 pb-4">
       <div className="flex justify-between items-center">
         <h2 className="text-2xl font-black text-stone-900">Inventario</h2>
-        <button 
-          onClick={() => { setShowAddProduct(true); }}
-          className="bg-stone-900 text-white p-2 rounded-xl shadow-lg active:scale-95 transition-transform shrink-0"
-        >
-          <Plus size={20} />
-        </button>
+        <div className="flex gap-2">
+          <button 
+            onClick={async () => {
+              try {
+                await dataTransferService.exportDatabase();
+                alert('Exportación exitosa');
+              } catch (e) {
+                console.error(e);
+                alert('Error al exportar');
+              }
+            }}
+            className="bg-stone-100 text-stone-900 p-2 rounded-xl active:scale-95 transition-transform"
+            title="Exportar Datos"
+          >
+            <FileSpreadsheet size={20} />
+          </button>
+          <button 
+            onClick={async () => {
+              try {
+                const result = await FilePicker.pickFiles({ types: ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'], multiple: false });
+                if (result.files.length > 0) {
+                  const file = result.files[0];
+                  // Use Capacitor Filesystem to read file
+                  const fileRead = await Filesystem.readFile({ path: file.path! });
+                  
+                  await dataTransferService.importDatabase(fileRead.data as string);
+                  alert('Importación exitosa, la app se reiniciará');
+                  window.location.reload();
+                }
+              } catch (e) {
+                console.error(e);
+                alert('Error al importar');
+              }
+            }}
+            className="bg-stone-100 text-stone-900 p-2 rounded-xl active:scale-95 transition-transform"
+            title="Importar Datos"
+          >
+            <ArrowDownCircle size={20} />
+          </button>
+          <button 
+            onClick={() => { setShowAddProduct(true); }}
+            className="bg-stone-900 text-white p-2 rounded-xl shadow-lg active:scale-95 transition-transform shrink-0"
+          >
+            <Plus size={20} />
+          </button>
+        </div>
       </div>
 
       <div className="space-y-3">
