@@ -423,125 +423,125 @@ function InventoryTab({ products, onUpdate }: { products: Product[], onUpdate: (
         >Tarjetas</button>
       </div>
 
-      {activeInventoryTab === 'products' ? (
-        <>
-          <div className="flex justify-between items-center">
-            <h2 className="text-2xl font-black text-stone-900">Inventario</h2>
-            <div className="flex gap-2">
-              <button 
-                onClick={async () => {
-                  try {
-                    await dataTransferService.exportDatabase();
-                    alert('Exportación exitosa');
-                  } catch (e) {
-                    console.error(e);
-                    alert('Error al exportar');
-                  }
-                }}
-                className="bg-stone-100 text-stone-900 p-2 rounded-xl active:scale-95 transition-transform"
-                title="Exportar Datos"
-              >
-                <FileSpreadsheet size={20} />
-              </button>
-              <button 
-                onClick={async () => {
-                  try {
-                    const result = await FilePicker.pickFiles({ types: ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'], multiple: false });
-                    if (result.files.length > 0) {
-                      const file = result.files[0];
-                      // Use Capacitor Filesystem to read file
-                      const fileRead = await Filesystem.readFile({ path: file.path! });
-                      
-                      await dataTransferService.importDatabase(fileRead.data as string);
-                      alert('Importación exitosa, la app se reiniciará');
-                      window.location.reload();
-                    }
-                  } catch (e) {
-                    console.error(e);
-                    alert('Error al importar');
-                  }
-                }}
-                className="bg-stone-100 text-stone-900 p-2 rounded-xl active:scale-95 transition-transform"
-                title="Importar Datos"
-              >
-                <ArrowDownCircle size={20} />
-              </button>
-              <button 
-                onClick={() => { setShowAddProduct(true); }}
-                className="bg-stone-900 text-white p-2 rounded-xl shadow-lg active:scale-95 transition-transform shrink-0"
-              >
-                <Plus size={20} />
-              </button>
-            </div>
-          </div>
-          <div className="space-y-3">
-            {products
-              .sort((a, b) => a.name.localeCompare(b.name))
-              .map(product => (
-              <div key={product.id} className="bg-white p-4 rounded-2xl border border-stone-200 shadow-sm flex flex-col gap-4">
-                <div className="flex items-start gap-4">
-                  {product.image ? (
-                    <img 
-                      src={product.image} 
-                      alt={product.name}
-                      className="w-20 h-20 object-cover rounded-xl shrink-0 bg-stone-100"
-                    />
-                  ) : (
-                    <div className="w-20 h-20 bg-stone-100 rounded-xl shrink-0 flex items-center justify-center">
-                      <ImageIcon size={32} className="text-stone-300" />
-                    </div>
-                  )}
-                  <div className="flex-1 min-w-0">
-                    <div className="font-black text-stone-900 text-lg leading-tight truncate">{product.name}</div>
-                    <div className="text-xs text-stone-400 mt-1">
-                      {product.category && (
-                        <span className="inline-block bg-stone-100 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold mr-2">{product.category}</span>
-                      )}
-                      Stock: <span className="font-bold text-stone-600">{product.stock}</span> • 
-                      Precio: <span className="font-bold text-emerald-600">${product.price.toFixed(2)}</span> •
-                      Costo: <span className="font-bold text-stone-500">${(product.cost || 0).toFixed(2)}</span>
-                    </div>
-                  </div>
-                </div>
-                <div className="flex gap-2 justify-end">
+          {activeInventoryTab === 'products' ? (
+            <>
+              {/* Product Controls and List */}
+              <div className="flex justify-between items-center">
+                <h2 className="text-2xl font-black text-stone-900">Inventario</h2>
+                <div className="flex gap-2">
                   <button 
-                    onClick={() => { setShowMoveModal(product); setMoveType('entry'); }}
-                    className="bg-blue-50 text-blue-600 p-2.5 rounded-xl hover:bg-blue-100 transition-colors flex-1 flex justify-center shrink-0"
-                    title="Reabastecer"
+                    onClick={async () => {
+                      try {
+                        await dataTransferService.exportDatabase();
+                        alert('Exportación exitosa');
+                      } catch (e) {
+                        console.error(e);
+                        alert('Error al exportar');
+                      }
+                    }}
+                    className="bg-stone-100 text-stone-900 p-2 rounded-xl active:scale-95 transition-transform"
+                    title="Exportar Datos"
                   >
-                    <ArrowUpCircle size={20} />
+                    <FileSpreadsheet size={20} />
                   </button>
                   <button 
-                    onClick={() => { setShowMoveModal(product); setMoveType('waste'); }}
-                    className="bg-rose-50 text-rose-600 p-2.5 rounded-xl hover:bg-rose-100 transition-colors flex-1 flex justify-center shrink-0"
-                    title="Merma"
+                    onClick={async () => {
+                      try {
+                        const result = await FilePicker.pickFiles({ types: ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'], multiple: false });
+                        if (result.files.length > 0) {
+                          const file = result.files[0];
+                          const fileRead = await Filesystem.readFile({ path: file.path! });
+                          
+                          await dataTransferService.importDatabase(fileRead.data as string);
+                          alert('Importación exitosa, la app se reiniciará');
+                          window.location.reload();
+                        }
+                      } catch (e) {
+                        console.error(e);
+                        alert('Error al importar');
+                      }
+                    }}
+                    className="bg-stone-100 text-stone-900 p-2 rounded-xl active:scale-95 transition-transform"
+                    title="Importar Datos"
                   >
                     <ArrowDownCircle size={20} />
                   </button>
                   <button 
-                    onClick={() => { setShowEditProduct(product); }}
-                    className="bg-stone-50 text-stone-600 p-2.5 rounded-xl hover:bg-stone-100 transition-colors flex-1 flex justify-center shrink-0"
-                    title="Editar"
+                    onClick={() => { setShowAddProduct(true); }}
+                    className="bg-stone-900 text-white p-2 rounded-xl shadow-lg active:scale-95 transition-transform shrink-0"
                   >
-                    <Edit size={20} />
-                  </button>
-                  <button 
-                    onClick={() => setShowDeleteConfirm(product)}
-                    className="bg-stone-50 text-rose-400 p-2.5 rounded-xl hover:bg-rose-50 hover:text-rose-600 transition-colors flex-1 flex justify-center shrink-0"
-                    title="Eliminar"
-                  >
-                    <Trash2 size={20} />
+                    <Plus size={20} />
                   </button>
                 </div>
               </div>
-            ))}
-          </div>
-        </>
-      ) : (
-        <div className="p-4 bg-white rounded-2xl">
-          <h3 className="font-bold">Tarjetas</h3>
-        </div>
-      )}
+              <div className="space-y-3">
+                {products
+                  .sort((a, b) => a.name.localeCompare(b.name))
+                  .map(product => (
+                  <div key={product.id} className="bg-white p-4 rounded-2xl border border-stone-200 shadow-sm flex flex-col gap-4">
+                    <div className="flex items-start gap-4">
+                      {product.image ? (
+                        <img 
+                          src={product.image} 
+                          alt={product.name}
+                          className="w-20 h-20 object-cover rounded-xl shrink-0 bg-stone-100"
+                        />
+                      ) : (
+                        <div className="w-20 h-20 bg-stone-100 rounded-xl shrink-0 flex items-center justify-center">
+                          <ImageIcon size={32} className="text-stone-300" />
+                        </div>
+                      )}
+                      <div className="flex-1 min-w-0">
+                        <div className="font-black text-stone-900 text-lg leading-tight truncate">{product.name}</div>
+                        <div className="text-xs text-stone-400 mt-1">
+                          {product.category && (
+                            <span className="inline-block bg-stone-100 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold mr-2">{product.category}</span>
+                          )}
+                          Stock: <span className="font-bold text-stone-600">{product.stock}</span> • 
+                          Precio: <span className="font-bold text-emerald-600">${product.price.toFixed(2)}</span> •
+                          Costo: <span className="font-bold text-stone-500">${(product.cost || 0).toFixed(2)}</span>
+                        </div>
+                      </div>
+                    </div>
+                    <div className="flex gap-2 justify-end">
+                      <button 
+                        onClick={() => { setShowMoveModal(product); setMoveType('entry'); }}
+                        className="bg-blue-50 text-blue-600 p-2.5 rounded-xl hover:bg-blue-100 transition-colors flex-1 flex justify-center shrink-0"
+                        title="Reabastecer"
+                      >
+                        <ArrowUpCircle size={20} />
+                      </button>
+                      <button 
+                        onClick={() => { setShowMoveModal(product); setMoveType('waste'); }}
+                        className="bg-rose-50 text-rose-600 p-2.5 rounded-xl hover:bg-rose-100 transition-colors flex-1 flex justify-center shrink-0"
+                        title="Merma"
+                      >
+                        <ArrowDownCircle size={20} />
+                      </button>
+                      <button 
+                        onClick={() => { setShowEditProduct(product); }}
+                        className="bg-stone-50 text-stone-600 p-2.5 rounded-xl hover:bg-stone-100 transition-colors flex-1 flex justify-center shrink-0"
+                        title="Editar"
+                      >
+                        <Edit size={20} />
+                      </button>
+                      <button 
+                        onClick={() => setShowDeleteConfirm(product)}
+                        className="bg-stone-50 text-rose-400 p-2.5 rounded-xl hover:bg-rose-50 hover:text-rose-600 transition-colors flex-1 flex justify-center shrink-0"
+                        title="Eliminar"
+                      >
+                        <Trash2 size={20} />
+                      </button>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </>
+          ) : (
+            <div className="p-4 bg-white rounded-2xl">
+              <h3 className="font-bold">Tarjetas</h3>
+            </div>
+          )}
 
       <div className="space-y-3">
         {products
