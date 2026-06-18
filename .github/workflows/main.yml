@@ -47,6 +47,7 @@ jobs:
         run: |
           sed -i 's/<string name="app_name">.*<\/string>/<string name="app_name">Ventas Lee<\/string>/g' android/app/src/main/res/values/strings.xml
           sed -i 's/versionCode .*/versionCode ${{ github.run_number }}/' android/app/build.gradle
+          sed -i 's/versionName .*/versionName "1.1.${{ github.run_number }}"/' android/app/build.gradle
 
       # Permisos para Filesystem
       - name: Add Permissions
@@ -62,10 +63,10 @@ jobs:
       - name: Sign APK
         run: |
           sudo apt-get install -y apksigner
-          apksigner sign --ks android/my-upload-key.keystore --ks-key-alias ${{ secrets.ANDROID_KEY_ALIAS }} --ks-pass pass:${{ secrets.ANDROID_KEY_PASSWORD }} --key-pass pass:${{ secrets.ANDROID_KEY_PASSWORD }} --out android/app/build/outputs/apk/release/App_de_Ventas_v${{ github.run_number }}.apk android/app/build/outputs/apk/release/app-release-unsigned.apk
+          apksigner sign --ks android/my-upload-key.keystore --ks-key-alias ${{ secrets.ANDROID_KEY_ALIAS }} --ks-pass pass:${{ secrets.ANDROID_KEY_PASSWORD }} --key-pass pass:${{ secrets.ANDROID_KEY_PASSWORD }} --out android/app/build/outputs/apk/release/App_de_Ventas_v1.1.${{ github.run_number }}.apk android/app/build/outputs/apk/release/app-release-unsigned.apk
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: App_de_Ventas_v${{ github.run_number }}
-          path: android/app/build/outputs/apk/release/App_de_Ventas_v${{ github.run_number }}.apk
+          name: App_de_Ventas_v1.1.${{ github.run_number }}
+          path: android/app/build/outputs/apk/release/App_de_Ventas_v1.1.${{ github.run_number }}.apk
