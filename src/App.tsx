@@ -496,7 +496,7 @@ function InventoryTab({ products, onUpdate }: { products: Product[], onUpdate: (
                   <button 
                     onClick={async () => {
                       try {
-                          const result = await FilePicker.pickFiles({ types: ['application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'], multiple: false });
+                          const result = await FilePicker.pickFiles({ types: ['application/zip', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'], multiple: false });
                         if (result.files.length > 0) {
                           const file = result.files[0];
                           if (!file.path) throw new Error('No se pudo obtener la ruta del archivo');
