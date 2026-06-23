@@ -18,10 +18,13 @@ export const MigrationService = {
       // 3. Migrate Sales
       await this.migrateSales();
 
-      // 4. Mark as migrated
+      // 4. Run schema fixes (one-time ALTER TABLE for old schemas)
+      await this.runSchemaFixes();
+
+      // 5. Mark as migrated
       await this.markAsMigrated();
       
-      // 5. Clean localStorage
+      // 6. Clean localStorage
       this.clearLocalStorage();
       
       console.log('Migration completed.');
@@ -159,5 +162,73 @@ export const MigrationService = {
 
   async markAsMigrated() {
     await dbService.run('INSERT INTO settings (key, value) VALUES ("migrated", "true")');
+  },
+
+  async runSchemaFixes() {
+    try {
+      const fixed = await this.isSchemaFixed();
+      if (fixed) return;
+
+      const prodResult = await dbService.query('PRAGMA table_info(products);');
+      const prodColumns = prodResult.values || [];
+      const hasOldStock = prodColumns.some((col: any) => col.name === 'stocks');
+      const hasNewStock = prodColumns.some((col: any) => col.name === 'stock');
+
+      if (hasOldStock && !hasNewStock) {
+        console.log('Renaming column "stocks" to "stock" in "products" table...');
+        await dbService.execute('ALTER TABLE products RENAME COLUMN stocks TO stock;');
+      }
+
+      const payResult = await dbService.query('PRAGMA table_info(payments);');
+      const payColumns = payResult.values || [];
+      const hasCardId = payColumns.some((col: any) => col.name === 'card_id');
+
+      if (!hasCardId) {
+        console.log('Adding column "card_id" to "payments" table...');
+        await dbService.execute('ALTER TABLE payments ADD COLUMN card_id INTEGER;');
+      }
+
+      const saleResult = await dbService.query('PRAGMA table_info(sales);');
+      const saleColumns = saleResult.values || [];
+      const hasSaleCardId = saleColumns.some((col: any) => col.name === 'card_id');
+
+      if (!hasSaleCardId) {
+        console.log('Adding column "card_id" to "sales" table...');
+        await dbService.execute('ALTER TABLE sales ADD COLUMN card_id INTEGER;');
+      }
+
+      const hasSaleCancelled = saleColumns.some((col: any) => col.name === 'cancelled');
+      if (!hasSaleCancelled) {
+        console.log('Adding column "cancelled" to "sales" table...');
+        await dbService.execute('ALTER TABLE sales ADD COLUMN cancelled INTEGER DEFAULT 0;');
+      }
+
+      const sessResult = await dbService.query('PRAGMA table_info(sessions);');
+      const sessColumns = sessResult.values || [];
+      const hasSessName = sessColumns.some((col: any) => col.name === 'name');
+      const hasSessDeleted = sessColumns.some((col: any) => col.name === 'deleted');
+
+      if (!hasSessName) {
+        console.log('Adding column "name" to "sessions" table...');
+        await dbService.execute('ALTER TABLE sessions ADD COLUMN name TEXT;');
+      }
+      if (!hasSessDeleted) {
+        console.log('Adding column "deleted" to "sessions" table...');
+        await dbService.execute('ALTER TABLE sessions ADD COLUMN deleted INTEGER DEFAULT 0;');
+      }
+
+      await this.markSchemaFixed();
+    } catch (error) {
+      console.error('Error fixing schema:', error);
+    }
+  },
+
+  async isSchemaFixed() {
+    const result = await dbService.query('SELECT value FROM settings WHERE key = "schema_fixed"');
+    return result.values && result.values.length > 0;
+  },
+
+  async markSchemaFixed() {
+    await dbService.run('INSERT INTO settings (key, value) VALUES ("schema_fixed", "true")');
   }
 };

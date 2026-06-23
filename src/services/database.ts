@@ -17,70 +17,10 @@ class DatabaseService {
       await this.db.open();
 
       await this.createSchema();
-      await this.fixSchema();
       console.log('Database initialized successfully');
     } catch (error) {
       console.error('Error initializing database', error);
       throw error;
-    }
-  }
-
-  private async fixSchema() {
-    try {
-      // Products table fix
-      const prodResult = await this.db.query('PRAGMA table_info(products);');
-      const prodColumns = prodResult.values || [];
-      const hasOldStock = prodColumns.some((col: any) => col.name === 'stocks');
-      const hasNewStock = prodColumns.some((col: any) => col.name === 'stock');
-      
-      if (hasOldStock && !hasNewStock) {
-        console.log('Renaming column "stocks" to "stock" in "products" table...');
-        await this.db.execute('ALTER TABLE products RENAME COLUMN stocks TO stock;');
-      }
-
-      // Payments table fix: add card_id
-      const payResult = await this.db.query('PRAGMA table_info(payments);');
-      const payColumns = payResult.values || [];
-      const hasCardId = payColumns.some((col: any) => col.name === 'card_id');
-      
-      if (!hasCardId) {
-        console.log('Adding column "card_id" to "payments" table...');
-        await this.db.execute('ALTER TABLE payments ADD COLUMN card_id INTEGER;');
-      }
-
-      // Sales table fix: add card_id
-      const saleResult = await this.db.query('PRAGMA table_info(sales);');
-      const saleColumns = saleResult.values || [];
-      const hasSaleCardId = saleColumns.some((col: any) => col.name === 'card_id');
-      
-      if (!hasSaleCardId) {
-        console.log('Adding column "card_id" to "sales" table...');
-        await this.db.execute('ALTER TABLE sales ADD COLUMN card_id INTEGER;');
-      }
-
-      // Sales table fix: add cancelled column
-      const hasSaleCancelled = saleColumns.some((col: any) => col.name === 'cancelled');
-      if (!hasSaleCancelled) {
-        console.log('Adding column "cancelled" to "sales" table...');
-        await this.db.execute('ALTER TABLE sales ADD COLUMN cancelled INTEGER DEFAULT 0;');
-      }
-
-      // Sessions table fix: add name and deleted columns
-      const sessResult = await this.db.query('PRAGMA table_info(sessions);');
-      const sessColumns = sessResult.values || [];
-      const hasSessName = sessColumns.some((col: any) => col.name === 'name');
-      const hasSessDeleted = sessColumns.some((col: any) => col.name === 'deleted');
-      
-      if (!hasSessName) {
-        console.log('Adding column "name" to "sessions" table...');
-        await this.db.execute('ALTER TABLE sessions ADD COLUMN name TEXT;');
-      }
-      if (!hasSessDeleted) {
-        console.log('Adding column "deleted" to "sessions" table...');
-        await this.db.execute('ALTER TABLE sessions ADD COLUMN deleted INTEGER DEFAULT 0;');
-      }
-    } catch (error) {
-      console.error('Error fixing schema:', error);
     }
   }
 
@@ -176,6 +116,15 @@ class DatabaseService {
 
     for (const table of tables) {
       await this.db.execute(table);
+    }
+  }
+
+  async execute(sql: string) {
+    try {
+      return await this.db.execute(sql);
+    } catch (error) {
+      console.error('Database Execute Error:', sql, error);
+      throw error;
     }
   }
 
