@@ -112,26 +112,22 @@ class DataTransferService {
         await Filesystem.writeFile({
           path: fileName,
           data: zipBase64,
-          directory: Directory.Downloads,
+          directory: Directory.Cache,
         });
 
-        try {
-          const savedUri = await Filesystem.getUri({
-            path: fileName,
-            directory: Directory.Downloads,
-          });
+        const savedUri = await Filesystem.getUri({
+          path: fileName,
+          directory: Directory.Cache,
+        });
 
-          await Share.share({
-            title: 'Exportar Base de Datos',
-            text: `Backup guardado en Descargas/${fileName}`,
-            url: savedUri.uri,
-            dialogTitle: 'Compartir Backup',
-          });
-        } catch {
-          // Share is optional — user already has the file
-        }
+        await Share.share({
+          title: 'Exportar Base de Datos',
+          text: `Backup exportado: ${fileName}`,
+          url: savedUri.uri,
+          dialogTitle: 'Compartir Backup',
+        });
 
-        return `Archivo guardado en: Descargas/${fileName}`;
+        return `Backup exportado: ${fileName}`;
       } else {
         const blob = new Blob([new Uint8Array(atob(zipBase64).split('').map(c => c.charCodeAt(0)))], { type: 'application/zip' });
         const url = URL.createObjectURL(blob);
