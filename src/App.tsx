@@ -11,7 +11,7 @@ import { ReportsTab } from './components/ReportsTab';
 import { VenderGrid } from './components/VenderGrid';
 import { CartModal } from './components/CartModal';
 import { PaymentModal } from './components/PaymentModal';
-import type { Product, CartItem, Session } from './types';
+import type { Product, CartItem, Session, Card } from './types';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'vender' | 'inventario' | 'reportes'>('vender');
@@ -22,7 +22,7 @@ export default function App() {
   const [showCartModal, setShowCartModal] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'transfer' | 'split' | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
-  const [cards, setCards] = useState<any[]>([]);
+  const [cards, setCards] = useState<Card[]>([]);
 
   useEffect(() => {
     api.getCards().then(setCards);

@@ -1,3 +1,11 @@
+export interface Card {
+  id: number;
+  name: string;
+  bank: string;
+  account_number: string;
+  deleted?: number;
+}
+
 export interface Product {
   id: number;
   name: string;
