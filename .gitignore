@@ -1,4 +1,3 @@
-```
 # Build artifacts
 android/app/src/main/assets/public/assets/
 android/.gradle/
@@ -31,4 +30,8 @@ node_modules/
 # OS
 .DS_Store
 Thumbs.db
-```
+
+# Local dev database
+*.db
+*.db-shm
+*.db-wal
