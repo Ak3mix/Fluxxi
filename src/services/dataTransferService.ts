@@ -84,66 +84,67 @@ class DataTransferService {
   }
 
   async exportDatabase(): Promise<string> {
-    const xlsxBase64 = await this.generateXLSXBase64();
-    const zip = new JSZip();
+    try {
+      const xlsxBase64 = await this.generateXLSXBase64();
+      const zip = new JSZip();
 
-    // Add the XLSX to the ZIP
-    zip.file('backup.xlsx', xlsxBase64, { base64: true });
+      zip.file('backup.xlsx', xlsxBase64, { base64: true });
 
-    // Add product images (compressed)
-    const products = await this.getProductsWithImages();
-    for (const product of products) {
-      try {
-        const result = await Filesystem.readFile({
-          path: product.image_path,
-          directory: Directory.Data,
-        });
-        let fileData = result.data as string;
-        fileData = await this.compressImage(fileData);
-        zip.file(product.image_path, fileData, { base64: true });
-      } catch (e) {
-        console.error(`Error reading image for product ${product.id}:`, e);
+      const products = await this.getProductsWithImages();
+      for (const product of products) {
+        try {
+          const result = await Filesystem.readFile({
+            path: product.image_path,
+            directory: Directory.Data,
+          });
+          let fileData = result.data as string;
+          fileData = await this.compressImage(fileData);
+          zip.file(product.image_path, fileData, { base64: true });
+        } catch (e) {
+          console.error(`Error reading image for product ${product.id}:`, e);
+        }
       }
-    }
 
-    const zipBase64 = await zip.generateAsync({ type: 'base64' });
-    const fileName = `backup_ventas_${new Date().toISOString().replace(/[:.]/g, '-')}.zip`;
+      const zipBase64 = await zip.generateAsync({ type: 'base64' });
+      const fileName = `backup_ventas_${new Date().toISOString().replace(/[:.]/g, '-')}.zip`;
 
-    if (Capacitor.isNativePlatform()) {
-      // First save to Downloads
-      await Filesystem.writeFile({
-        path: fileName,
-        data: zipBase64,
-        directory: Directory.Downloads,
-      });
-
-      // Then offer to share (in case user wants to send via WhatsApp, etc.)
-      try {
-        const savedUri = await Filesystem.getUri({
+      if (Capacitor.isNativePlatform()) {
+        await Filesystem.writeFile({
           path: fileName,
+          data: zipBase64,
           directory: Directory.Downloads,
         });
 
-        await Share.share({
-          title: 'Exportar Base de Datos',
-          text: `Backup guardado en Descargas/${fileName}`,
-          url: savedUri.uri,
-          dialogTitle: 'Compartir Backup',
-        });
-      } catch {
-        // Share is optional — user already has the file
-      }
+        try {
+          const savedUri = await Filesystem.getUri({
+            path: fileName,
+            directory: Directory.Downloads,
+          });
 
-      return `Archivo guardado en: Descargas/${fileName}`;
-    } else {
-      const blob = new Blob([new Uint8Array(atob(zipBase64).split('').map(c => c.charCodeAt(0)))], { type: 'application/zip' });
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = fileName;
-      a.click();
-      URL.revokeObjectURL(url);
-      return `Archivo descargado: ${fileName}`;
+          await Share.share({
+            title: 'Exportar Base de Datos',
+            text: `Backup guardado en Descargas/${fileName}`,
+            url: savedUri.uri,
+            dialogTitle: 'Compartir Backup',
+          });
+        } catch {
+          // Share is optional — user already has the file
+        }
+
+        return `Archivo guardado en: Descargas/${fileName}`;
+      } else {
+        const blob = new Blob([new Uint8Array(atob(zipBase64).split('').map(c => c.charCodeAt(0)))], { type: 'application/zip' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = fileName;
+        a.click();
+        URL.revokeObjectURL(url);
+        return `Archivo descargado: ${fileName}`;
+      }
+    } catch (e) {
+      console.error('exportDatabase error:', e);
+      throw new Error(`Error al exportar: ${e instanceof Error ? e.message : JSON.stringify(e)}`);
     }
   }
 
