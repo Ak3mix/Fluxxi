@@ -1,4 +1,5 @@
 import { dbService } from '../database';
+import type { SessionInput, SaleInput } from '../../types';
 
 export const SalesRepository = {
   async getCurrentSession() {
@@ -6,7 +7,7 @@ export const SalesRepository = {
     return result.values && result.values.length > 0 ? result.values[0] : null;
   },
 
-  async createSession(session: any) {
+  async createSession(session: SessionInput) {
     await dbService.run('INSERT INTO sessions (start_time, is_closed) VALUES (?, 0)', [session.start_time]);
     return this.getCurrentSession();
   },
@@ -15,7 +16,7 @@ export const SalesRepository = {
     await dbService.run('UPDATE sessions SET is_closed = 1, end_time = ? WHERE id = ?', [endTime, id]);
   },
 
-  async updateSession(id: number, data: any) {
+  async updateSession(id: number, data: SessionInput) {
     await dbService.run('UPDATE sessions SET name = ? WHERE id = ?', [data.name, id]);
   },
 
@@ -23,7 +24,7 @@ export const SalesRepository = {
     await dbService.run('UPDATE sessions SET deleted = 1 WHERE id = ?', [id]);
   },
 
-  async createSale(sale: any) {
+  async createSale(sale: SaleInput & { session_id: number }) {
     const timestamp = sale.timestamp || new Date().toISOString();
     const result = await dbService.run(
       'INSERT INTO sales (customer_id, total, payment_method, status, created_at, session_id, card_id) VALUES (?, ?, ?, ?, ?, ?, ?)',

@@ -148,7 +148,7 @@ export function ReportsTab({
               console.error('JSON parse error', e);
             }
           }
-          payments.forEach((p: any) => {
+          payments.forEach(p => {
             if (p.method === 'cash') acc.cash += p.amount;
             else if (p.method === 'transfer') acc.transfer += p.amount;
           });
@@ -200,7 +200,7 @@ export function ReportsTab({
             ) : (
               reportData?.sales.filter(s => !s.cancelled).map(sale => {
                 const itemSummary =
-                  sale.items?.map((i: any) => `${i.quantity}x ${i.product_name || 'Producto'}`).join(', ') || '';
+                  sale.items?.map(i => `${i.quantity}x ${i.product_name || 'Producto'}`).join(', ') || '';
                 const paymentLabel =
                   sale.payment_method === 'cash'
                     ? 'Efectivo'
@@ -208,7 +208,7 @@ export function ReportsTab({
                       ? 'Transferencia'
                       : sale.payments
                           ?.map(
-                            (p: any) =>
+                            p =>
                               `${p.method === 'cash' ? 'Efectivo' : 'Trans'}: $${p.amount.toFixed(2)}`
                           )
                           .join(' · ') || 'Combinado';
@@ -241,7 +241,7 @@ export function ReportsTab({
                   .filter(s => s.cancelled)
                   .map(sale => {
                     const itemSummary =
-                      sale.items?.map((i: any) => `${i.quantity}x ${i.product_name || 'Producto'}`).join(', ') || '';
+                      sale.items?.map(i => `${i.quantity}x ${i.product_name || 'Producto'}`).join(', ') || '';
                     return (
                       <div
                         key={sale.id}

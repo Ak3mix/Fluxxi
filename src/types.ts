@@ -31,6 +31,17 @@ export interface Movement {
   timestamp: string;
 }
 
+export interface SaleItem {
+  id: number;
+  product_id?: number;
+  product_name?: string;
+  name?: string;
+  quantity: number;
+  price: number;
+  unit_price?: number;
+  subtotal?: number;
+}
+
 export interface Sale {
   id: number;
   total: number;
@@ -40,7 +51,7 @@ export interface Sale {
   timestamp: string;
   cancelled?: number;
   card_id?: number | null;
-  items?: any[];
+  items?: SaleItem[];
   created_at?: string;
 }
 
@@ -51,4 +62,47 @@ export interface Session {
   is_closed: number;
   name?: string;
   deleted?: number;
+}
+
+export interface ProductInput {
+  name: string;
+  price: number;
+  cost?: number;
+  stock: number;
+  initial_stock?: number;
+  category?: string;
+  image?: string | null;
+}
+
+export interface CardInput {
+  name: string;
+  bank: string;
+  account_number: string;
+}
+
+export interface MoveInput {
+  product_id: number;
+  type: 'entry' | 'waste';
+  quantity: number;
+  reason?: string;
+  session_id?: number;
+  timestamp?: string;
+  product_name?: string;
+}
+
+export interface SaleInput {
+  items: SaleItem[];
+  payment_method: 'cash' | 'transfer' | 'split';
+  total: number;
+  payments?: { method: 'cash' | 'transfer'; amount: number }[];
+  timestamp: string;
+  card_id?: number | null;
+  customer_id?: number;
+  status?: string;
+  session_id?: number;
+}
+
+export interface SessionInput {
+  start_time?: string;
+  name?: string;
 }

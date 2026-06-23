@@ -13,7 +13,7 @@ import { ReportsTab } from './components/ReportsTab';
 import { VenderGrid } from './components/VenderGrid';
 import { CartModal } from './components/CartModal';
 import { PaymentModal } from './components/PaymentModal';
-import type { Product, Session, Card } from './types';
+import type { Product, Session, Card, SaleInput } from './types';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'vender' | 'inventario' | 'reportes'>('vender');
@@ -135,7 +135,7 @@ export default function App() {
         finalPayments = [{ method: 'transfer' as const, amount: cartTotal }];
       }
       
-      const saleData: any = {
+      const saleData: SaleInput = {
         items: cart,
         payment_method: finalPaymentMethod,
         total: cartTotal,

@@ -1,20 +1,20 @@
-
 import { ProductRepository } from './repositories/productRepository';
 import { SalesRepository } from './repositories/salesRepository';
 import { MovementRepository } from './repositories/movementRepository';
 import { CardRepository } from './repositories/cardRepository';
 import { dbService } from './database';
+import type { ProductInput, CardInput, MoveInput, SaleInput, SessionInput } from '../types';
 
 export const api = {
   async getProducts() {
     return ProductRepository.getAll();
   },
 
-  async addProduct(product: any) {
+  async addProduct(product: ProductInput) {
     return ProductRepository.add(product);
   },
 
-  async updateProduct(id: number, product: any) {
+  async updateProduct(id: number, product: ProductInput) {
     return ProductRepository.update(id, product);
   },
 
@@ -25,35 +25,37 @@ export const api = {
   async getCards() {
     return CardRepository.getAll();
   },
-  async addCard(card: any) {
+
+  async addCard(card: CardInput) {
     return CardRepository.add(card);
   },
-  async updateCard(id: number, card: any) {
+
+  async updateCard(id: number, card: CardInput) {
     return CardRepository.update(id, card);
   },
+
   async deleteCard(id: number) {
     return CardRepository.delete(id);
   },
 
-  async moveInventory(move: any) {
+  async moveInventory(move: MoveInput) {
     const session = await this.getCurrentSession();
     move.session_id = session.id;
     move.timestamp = new Date().toISOString();
-    
-    // Obtener el nombre del producto para registrarlo en el movimiento
+
     const productResult = await dbService.query('SELECT name FROM products WHERE id = ?', [move.product_id]);
     if (productResult.values && productResult.values.length > 0) {
       move.product_name = productResult.values[0].name;
     }
-    
+
     await MovementRepository.add(move);
     return { success: true };
   },
 
-  async createSale(sale: any) {
+  async createSale(sale: SaleInput) {
     const session = await this.getCurrentSession();
-    sale.session_id = session.id;
-    return await SalesRepository.createSale(sale);
+    const saleWithSession = { ...sale, session_id: session.id };
+    return await SalesRepository.createSale(saleWithSession);
   },
 
   async getCurrentReport() {
@@ -67,7 +69,7 @@ export const api = {
     return SalesRepository.getSessionHistory();
   },
 
-  async updateSession(id: number, data: any) {
+  async updateSession(id: number, data: SessionInput) {
     return SalesRepository.updateSession(id, data);
   },
 
@@ -78,7 +80,6 @@ export const api = {
   async closeSession() {
     const session = await this.getCurrentSession();
     await SalesRepository.closeSession(session.id, new Date().toISOString());
-    // Create new session
     await SalesRepository.createSession({ start_time: new Date().toISOString() });
     return { success: true };
   },
@@ -99,5 +100,5 @@ export const api = {
       session = await SalesRepository.createSession({ start_time: new Date().toISOString() });
     }
     return session;
-  }
+  },
 };

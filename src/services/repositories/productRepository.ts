@@ -1,6 +1,7 @@
 import { dbService } from '../database';
 import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
+import type { ProductInput } from '../../types';
 
 async function resolveImagePath(path: string | null | undefined): Promise<string | undefined> {
   if (!path) return undefined;
@@ -33,7 +34,7 @@ export const ProductRepository = {
     return products;
   },
 
-  async add(product: any) {
+  async add(product: ProductInput) {
     const result = await dbService.run(
       'INSERT INTO products (name, price, cost, stock, initial_stock, category, image_path, deleted) VALUES (?, ?, ?, ?, ?, ?, ?, 0)',
       [product.name, product.price, product.cost, product.stock, product.initial_stock, product.category, product.image]
@@ -41,7 +42,7 @@ export const ProductRepository = {
     return { ...product, id: result.changes?.lastId };
   },
 
-  async update(id: number, product: any) {
+  async update(id: number, product: ProductInput) {
     await dbService.run(
       'UPDATE products SET name = ?, price = ?, cost = ?, stock = ?, category = ?, image_path = ? WHERE id = ?',
       [product.name, product.price, product.cost, product.stock, product.category, product.image, id]

@@ -1,7 +1,8 @@
 import { dbService } from '../database';
+import type { MoveInput } from '../../types';
 
 export const MovementRepository = {
-  async add(movement: any) {
+  async add(movement: MoveInput) {
     const timestamp = movement.timestamp || new Date().toISOString();
     await dbService.run(
       'INSERT INTO movements (product_id, product_name, type, quantity, reason, session_id, timestamp) VALUES (?, ?, ?, ?, ?, ?, ?)',
