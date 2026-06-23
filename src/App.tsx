@@ -5,18 +5,19 @@ import { api } from './services/api';
 import { dbService } from './services/database';
 import { MigrationService } from './services/migration';
 import { cn } from './utils/cn';
+import { usePersistedCart } from './hooks/usePersistedCart';
 import { NavButton } from './components/NavButton';
 import { InventoryTab } from './components/InventoryTab';
 import { ReportsTab } from './components/ReportsTab';
 import { VenderGrid } from './components/VenderGrid';
 import { CartModal } from './components/CartModal';
 import { PaymentModal } from './components/PaymentModal';
-import type { Product, CartItem, Session, Card } from './types';
+import type { Product, Session, Card } from './types';
 
 export default function App() {
   const [activeTab, setActiveTab] = useState<'vender' | 'inventario' | 'reportes'>('vender');
   const [products, setProducts] = useState<Product[]>([]);
-  const [cart, setCart] = useState<CartItem[]>([]);
+  const { cart, addToCart, removeFromCart, updateCartQuantity, clearCart, cartTotal, cartQuantity } = usePersistedCart();
   const [loading, setLoading] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showCartModal, setShowCartModal] = useState(false);
@@ -70,34 +71,6 @@ export default function App() {
     };
     init();
   }, []);
-
-  const addToCart = (product: Product) => {
-    if (product.stock <= 0) return;
-    setCart(prev => {
-      const existing = prev.find(item => item.id === product.id);
-      if (existing) {
-        if (existing.quantity >= product.stock) return prev;
-        return prev.map(item => item.id === product.id ? { ...item, quantity: item.quantity + 1 } : item);
-      }
-      return [...prev, { ...product, quantity: 1 }];
-    });
-  };
-
-  const removeFromCart = (productId: number) => {
-    setCart(prev => prev.filter(item => item.id !== productId));
-  };
-
-  const updateCartQuantity = (productId: number, delta: number) => {
-    setCart(prev => prev.map(item => {
-      if (item.id === productId) {
-        const newQty = Math.max(1, Math.min(item.quantity + delta, item.stock));
-        return { ...item, quantity: newQty };
-      }
-      return item;
-    }));
-  };
-
-  const cartTotal = cart.reduce((sum, item) => sum + (item.price * item.quantity), 0);
 
   // Helper function to initialize split payments when selecting payment method
   const initializeSplitPayments = (method: 'cash' | 'transfer' | 'split') => {
@@ -172,7 +145,7 @@ export default function App() {
       
       const res = await api.createSale(saleData);
       if (res) {
-        setCart([]);
+        clearCart();
         setShowPaymentModal(false);
         setPaymentMethod(null);
         setSelectedCardId(null);
@@ -270,7 +243,7 @@ export default function App() {
               >
                 <div className="flex items-center gap-3">
                   <div className="bg-emerald-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black">
-                    {cart.reduce((acc, item) => acc + item.quantity, 0)}
+                    {cartQuantity}
                   </div>
                   <span className="font-bold">Ver Carrito</span>
                 </div>
