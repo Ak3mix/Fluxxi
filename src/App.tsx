@@ -6,6 +6,7 @@ import { dbService } from './services/database';
 import { MigrationService } from './services/migration';
 import { cn } from './utils/cn';
 import { usePersistedCart } from './hooks/usePersistedCart';
+import { ErrorBoundary } from './components/ErrorBoundary';
 import { NavButton } from './components/NavButton';
 import { InventoryTab } from './components/InventoryTab';
 import { ReportsTab } from './components/ReportsTab';
@@ -186,15 +187,24 @@ export default function App() {
       <main className="w-full max-w-md md:max-w-3xl lg:max-w-5xl mx-auto p-4 pb-24">
         <AnimatePresence mode="wait">
           {activeTab === 'vender' && (
-            <VenderGrid
-              products={products}
-              searchQuery={searchQuery}
-              selectedCategory={selectedCategory}
-              categories={categories}
-              onSearchChange={setSearchQuery}
-              onCategoryChange={setSelectedCategory}
-              onAddToCart={addToCart}
-            />
+            <motion.div
+              key="vender"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
+              <ErrorBoundary label="Vender">
+                <VenderGrid
+                  products={products}
+                  searchQuery={searchQuery}
+                  selectedCategory={selectedCategory}
+                  categories={categories}
+                  onSearchChange={setSearchQuery}
+                  onCategoryChange={setSelectedCategory}
+                  onAddToCart={addToCart}
+                />
+              </ErrorBoundary>
+            </motion.div>
           )}
 
           {activeTab === 'inventario' && (
@@ -204,7 +214,9 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
             >
-              <InventoryTab products={products} onUpdate={fetchProducts} />
+              <ErrorBoundary label="Inventario">
+                <InventoryTab products={products} onUpdate={fetchProducts} />
+              </ErrorBoundary>
             </motion.div>
           )}
 
@@ -215,7 +227,9 @@ export default function App() {
               animate={{ opacity: 1, y: 0 }}
               exit={{ opacity: 0, y: -10 }}
             >
-              <ReportsTab products={products} onSessionClose={() => { fetchSession(); fetchProducts(); }} onProductsChange={fetchProducts} />
+              <ErrorBoundary label="Cierre">
+                <ReportsTab products={products} onSessionClose={() => { fetchSession(); fetchProducts(); }} onProductsChange={fetchProducts} />
+              </ErrorBoundary>
             </motion.div>
           )}
         </AnimatePresence>
