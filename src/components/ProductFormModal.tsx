@@ -1,4 +1,6 @@
 import React, { useState, useEffect } from 'react';
+import { Scan } from 'lucide-react';
+import { BarcodeScanner } from '@simplymobile/barcode-scanner';
 import { cn } from '../utils/cn';
 import { Modal } from './Modal';
 import { ImagePicker } from './ImagePicker';
@@ -7,6 +9,7 @@ import type { Product } from '../types';
 
 export interface ProductFormData {
   name: string;
+  code?: string;
   price: number;
   cost: number;
   stock: number;
@@ -24,16 +27,31 @@ interface Props {
 
 export function ProductFormModal({ isOpen, initialData, isSaving = false, onSave, onClose }: Props) {
   const [name, setName] = useState('');
+  const [code, setCode] = useState('');
   const [price, setPrice] = useState('');
   const [cost, setCost] = useState('');
   const [stock, setStock] = useState('');
   const [category, setCategory] = useState('');
   const [image, setImage] = useState<string | null>(null);
   const [errors, setErrors] = useState<{ name?: string; price?: string; stock?: string }>({});
+  const [scanning, setScanning] = useState(false);
+
+  const handleScan = async () => {
+    try {
+      setScanning(true);
+      const status = await BarcodeScanner.checkPermission({ force: true });
+      if (!status.granted) return;
+      await BarcodeScanner.prepare();
+      const result = await BarcodeScanner.startScan();
+      if (result?.content) setCode(result.content);
+    } catch { /* user cancelled */ }
+    finally { setScanning(false); }
+  };
 
   useEffect(() => {
     if (initialData) {
       setName(initialData.name);
+      setCode(initialData.code || '');
       setPrice(initialData.price.toString());
       setCost((initialData.cost || 0).toString());
       setStock(initialData.stock.toString());
@@ -41,6 +59,7 @@ export function ProductFormModal({ isOpen, initialData, isSaving = false, onSave
       setImage(initialData.image || null);
     } else {
       setName('');
+      setCode('');
       setPrice('');
       setCost('');
       setStock('');
@@ -81,6 +100,7 @@ export function ProductFormModal({ isOpen, initialData, isSaving = false, onSave
 
     await onSave({
       name: name.trim(),
+      code: code.trim() || undefined,
       price: priceNum,
       cost: costNum,
       stock: stockNum,
@@ -108,6 +128,26 @@ export function ProductFormModal({ isOpen, initialData, isSaving = false, onSave
               className="w-full bg-stone-50 border-none rounded-xl p-3 font-bold"
             />
             {errors.name && <p id="product-name-error" className="text-xs text-rose-500 mt-1">{errors.name}</p>}
+          </div>
+          <div>
+            <label className="text-[10px] uppercase font-bold text-stone-500 mb-1 block">Código de barras</label>
+            <div className="flex gap-2">
+              <input
+                value={code}
+                onChange={e => setCode(e.target.value)}
+                placeholder="Opcional"
+                className="flex-1 bg-stone-50 border-none rounded-xl p-3 font-mono"
+              />
+              <button
+                type="button"
+                disabled={scanning}
+                onClick={handleScan}
+                className="bg-emerald-50 text-emerald-600 p-3 rounded-xl shrink-0 disabled:opacity-50"
+                aria-label="Escanear código de barras"
+              >
+                <Scan size={20} />
+              </button>
+            </div>
           </div>
           <div>
             <label className="text-[10px] uppercase font-bold text-stone-500 mb-1 block">Categoría</label>

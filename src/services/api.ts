@@ -11,6 +11,10 @@ export const api = {
     return ProductRepository.getAll();
   },
 
+  async getProductByCode(code: string) {
+    return ProductRepository.findByCode(code);
+  },
+
   async addProduct(product: ProductInput) {
     return ProductRepository.add(product);
   },

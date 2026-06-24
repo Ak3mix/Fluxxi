@@ -16,6 +16,7 @@ import { VenderGrid } from './components/VenderGrid';
 import { CartModal } from './components/CartModal';
 import { PaymentModal } from './components/PaymentModal';
 import { SettingsModal } from './components/SettingsModal';
+import { BarcodeScanner } from '@simplymobile/barcode-scanner';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { App as CapacitorApp } from '@capacitor/app';
 import type { Product, Session, Card, SaleInput } from './types';
@@ -131,6 +132,29 @@ export default function App() {
     setCartPulse(true);
     try { await Haptics.impact({ style: ImpactStyle.Light }); } catch {}
     setTimeout(() => setCartPulse(false), 600);
+  };
+
+  const handleBarcodeScan = async () => {
+    try {
+      const status = await BarcodeScanner.checkPermission({ force: true });
+      if (!status.granted) {
+        addToast('Permiso de cámara denegado', 'error');
+        return;
+      }
+      await BarcodeScanner.prepare();
+      const result = await BarcodeScanner.startScan();
+      if (result?.content) {
+        const product = await api.getProductByCode(result.content);
+        if (product) {
+          handleAddToCart(product);
+          addToast('Producto agregado por código', 'success');
+        } else {
+          addToast('Producto no encontrado', 'error');
+        }
+      }
+    } catch {
+      // user cancelled scanner
+    }
   };
 
   const initializeSplitPayments = (method: 'cash' | 'transfer' | 'split') => {
@@ -274,6 +298,7 @@ export default function App() {
                   onCategoryChange={setSelectedCategory}
                   onAddToCart={handleAddToCart}
                   lowStockThreshold={lowStockThreshold}
+                  onBarcodeScan={handleBarcodeScan}
                 />
               </ErrorBoundary>
             </motion.div>
