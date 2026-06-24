@@ -142,18 +142,27 @@ export default function App() {
         return;
       }
       await BarcodeScanner.prepare();
-      const result = await BarcodeScanner.startScan();
-      if (result?.content) {
-        const product = await api.getProductByCode(result.content);
-        if (product) {
-          handleAddToCart(product);
-          addToast('Producto agregado por código', 'success');
-        } else {
-          addToast('Producto no encontrado', 'error');
+      BarcodeScanner.hideBackground();
+      let keepScanning = true;
+      while (keepScanning) {
+        try {
+          const result = await BarcodeScanner.startScan();
+          if (result?.content) {
+            const product = await api.getProductByCode(result.content);
+            if (product) {
+              handleAddToCart(product);
+            } else {
+              addToast(`Código no encontrado: ${result.content}`, 'error');
+            }
+          }
+        } catch {
+          keepScanning = false;
         }
       }
     } catch {
-      // user cancelled scanner
+      // permission error
+    } finally {
+      BarcodeScanner.showBackground();
     }
   };
 

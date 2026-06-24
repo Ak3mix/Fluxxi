@@ -42,10 +42,14 @@ export function ProductFormModal({ isOpen, initialData, isSaving = false, onSave
       const status = await BarcodeScanner.checkPermission({ force: true });
       if (!status.granted) return;
       await BarcodeScanner.prepare();
+      BarcodeScanner.hideBackground();
       const result = await BarcodeScanner.startScan();
       if (result?.content) setCode(result.content);
     } catch { /* user cancelled */ }
-    finally { setScanning(false); }
+    finally {
+      BarcodeScanner.showBackground();
+      setScanning(false);
+    }
   };
 
   useEffect(() => {
