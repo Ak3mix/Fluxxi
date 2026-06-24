@@ -3,17 +3,13 @@ import {
   Plus,
   ArrowUpCircle,
   ArrowDownCircle,
-  FileSpreadsheet,
   Trash2,
   Edit,
   Image as ImageIcon,
 } from 'lucide-react';
-import { Filesystem, Directory } from '@capacitor/filesystem';
-import { FilePicker } from '@capawesome/capacitor-file-picker';
 import { cn } from '../utils/cn';
 import { useDebounce } from '../hooks/useDebounce';
 import { formatCurrency } from '../utils/formatCurrency';
-import { dataTransferService } from '../services/dataTransferService';
 import { api } from '../services/api';
 import { useToast } from '../contexts/ToastContext';
 import { Skeleton } from './Skeleton';
@@ -24,7 +20,7 @@ import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { MoveInventoryModal } from './MoveInventoryModal';
 import type { Product, Card } from '../types';
 
-export function InventoryTab({ products, loading = false, onUpdate }: { products: Product[]; loading?: boolean; onUpdate: () => void }) {
+export function InventoryTab({ products, loading = false, onUpdate, lowStockThreshold = 5 }: { products: Product[]; loading?: boolean; onUpdate: () => void; lowStockThreshold?: number }) {
   const { addToast } = useToast();
   const [activeInventoryTab, setActiveInventoryTab] = useState<'products' | 'cards'>('products');
   const [showAddProduct, setShowAddProduct] = useState(false);
@@ -171,48 +167,6 @@ export function InventoryTab({ products, loading = false, onUpdate }: { products
             <h2 className="text-2xl font-black text-stone-900">Inventario</h2>
             <div className="flex gap-2">
               <button
-                onClick={async () => {
-                  try {
-                    await dataTransferService.exportDatabase();
-                    addToast('Exportación exitosa', 'success');
-                  } catch (e: any) {
-                    console.error('Export error:', e);
-                    addToast('Error al exportar: ' + (e.message || e.code || JSON.stringify(e)), 'error');
-                  }
-                }}
-                className="bg-stone-100 text-stone-900 p-3 rounded-xl active:scale-95 transition-transform"
-                title="Exportar Datos"
-                aria-label="Exportar datos"
-              >
-                <FileSpreadsheet size={20} />
-              </button>
-              <button
-                onClick={async () => {
-                  try {
-                    const result = await FilePicker.pickFiles({
-                      types: ['application/zip', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
-                    });
-                    if (result.files.length > 0) {
-                      const file = result.files[0];
-                      if (!file.path) throw new Error('No se pudo obtener la ruta del archivo');
-                      const fileRead = await Filesystem.readFile({ path: file.path });
-
-                      await dataTransferService.importDatabase(fileRead.data as string);
-                      addToast('Importación exitosa, la app se reiniciará', 'success');
-                      setTimeout(() => window.location.reload(), 1500);
-                    }
-                  } catch (e: any) {
-                    console.error('Import error:', e);
-                    addToast('Error al importar: ' + (e.message || JSON.stringify(e)), 'error');
-                  }
-                }}
-                className="bg-stone-100 text-stone-900 p-3 rounded-xl active:scale-95 transition-transform"
-                title="Importar Datos"
-                aria-label="Importar datos"
-              >
-                <ArrowDownCircle size={20} />
-              </button>
-              <button
                 onClick={() => {
                   setEditingProduct(null);
                   setShowAddProduct(true);
@@ -299,11 +253,11 @@ export function InventoryTab({ products, loading = false, onUpdate }: { products
                         )}
                         Stock:{' '}
                         <span
-                          className={cn('font-bold', (product.stock ?? 0) <= 5 ? 'text-rose-600' : 'text-stone-600')}
+                          className={cn('font-bold', (product.stock ?? 0) <= lowStockThreshold ? 'text-rose-600' : 'text-stone-600')}
                         >
                           {product.stock}
                         </span>
-                        {(product.stock ?? 0) <= 5 && (
+                        {(product.stock ?? 0) <= lowStockThreshold && (
                         <span className="ml-1 text-[10px] bg-rose-100 text-rose-700 font-black px-1.5 py-0.5 rounded-full uppercase">
                           Stock Bajo
                         </span>

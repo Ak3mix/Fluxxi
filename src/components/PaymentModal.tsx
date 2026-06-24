@@ -1,3 +1,4 @@
+import { useEffect } from 'react';
 import { motion } from 'motion/react';
 import { DollarSign, CreditCard } from 'lucide-react';
 import { cn } from '../utils/cn';
@@ -14,6 +15,7 @@ interface PaymentModalProps {
   cashInput: string;
   transferInput: string;
   loading: boolean;
+  defaultPaymentMethod?: 'cash' | 'transfer' | 'split';
   onClose: () => void;
   onPaymentMethodChange: (method: 'cash' | 'transfer' | 'split') => void;
   onCardChange: (id: number) => void;
@@ -32,6 +34,7 @@ export function PaymentModal({
   cashInput,
   transferInput,
   loading,
+  defaultPaymentMethod,
   onClose,
   onPaymentMethodChange,
   onCardChange,
@@ -39,6 +42,11 @@ export function PaymentModal({
   onTransferInputChange,
   onProcessSale,
 }: PaymentModalProps) {
+  useEffect(() => {
+    if (show && defaultPaymentMethod && !paymentMethod) {
+      onPaymentMethodChange(defaultPaymentMethod);
+    }
+  }, [show, defaultPaymentMethod]);
   return (
     <Modal isOpen={show} onClose={onClose} title="Método de Pago" variant="bottom-sheet">
       <p className="text-stone-500 text-center mb-6 -mt-4">Selecciona cómo pagará el cliente</p>

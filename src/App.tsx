@@ -5,7 +5,7 @@ import { api } from './services/api';
 import { dbService } from './services/database';
 import { MigrationService } from './services/migration';
 import { cn } from './utils/cn';
-import { formatCurrency } from './utils/formatCurrency';
+import { formatCurrency, setCurrencySymbol } from './utils/formatCurrency';
 import { usePersistedCart } from './hooks/usePersistedCart';
 import { useToast } from './contexts/ToastContext';
 import { ErrorBoundary } from './components/ErrorBoundary';
@@ -15,9 +15,11 @@ import { ReportsTab } from './components/ReportsTab';
 import { VenderGrid } from './components/VenderGrid';
 import { CartModal } from './components/CartModal';
 import { PaymentModal } from './components/PaymentModal';
+import { SettingsModal } from './components/SettingsModal';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { App as CapacitorApp } from '@capacitor/app';
 import type { Product, Session, Card, SaleInput } from './types';
+import type { SettingsMap } from './services/settingsRepository';
 
 const tabLabels: Record<string, string> = {
   vender: 'Vender',
@@ -34,9 +36,13 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showCartModal, setShowCartModal] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'transfer' | 'split' | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
   const [cards, setCards] = useState<Card[]>([]);
+
+  const [settings, setSettings] = useState<SettingsMap>({});
+  const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
 
   useEffect(() => {
     api.getCards().then(setCards);
@@ -58,6 +64,20 @@ export default function App() {
 
   const categories = ['all', ...Array.from(new Set(products.map(p => p.category).filter(Boolean)))] as string[];
 
+  const loadSettings = async () => {
+    const s = await api.getAllSettings();
+    setSettings(s);
+    setCurrencySymbol(s.currency_symbol || '$');
+    const photo = await api.getProfilePhoto();
+    setProfilePhoto(photo);
+  };
+
+  const handleSettingsChange = (s: SettingsMap) => {
+    setSettings(s);
+    setCurrencySymbol(s.currency_symbol || '$');
+    api.getProfilePhoto().then(setProfilePhoto);
+  };
+
   const fetchProducts = async () => {
     try {
       const data = await api.getProducts();
@@ -77,6 +97,7 @@ export default function App() {
       try {
         await dbService.initializeDatabase();
         await MigrationService.migrate();
+        await loadSettings();
         await fetchProducts();
         await fetchSession();
       } catch (e) {
@@ -90,7 +111,9 @@ export default function App() {
 
   useEffect(() => {
     const promise = CapacitorApp.addListener('backButton', () => {
-      if (showPaymentModal) {
+      if (showSettings) {
+        setShowSettings(false);
+      } else if (showPaymentModal) {
         setShowPaymentModal(false);
       } else if (showCartModal) {
         setShowCartModal(false);
@@ -101,7 +124,7 @@ export default function App() {
       }
     });
     return () => { promise.then(h => h.remove()); };
-  }, [showPaymentModal, showCartModal, activeTab]);
+  }, [showSettings, showPaymentModal, showCartModal, activeTab]);
 
   const handleAddToCart = async (product: Product) => {
     addToCart(product);
@@ -199,11 +222,25 @@ export default function App() {
     }
   };
 
+  const businessName = settings.business_name || 'VentasPro';
+  const initial = businessName[0].toUpperCase();
+  const lowStockThreshold = parseInt(settings.low_stock_threshold || '5', 10);
+  const defaultPaymentMethod = (settings.default_payment_method || 'cash') as 'cash' | 'transfer' | 'split';
+
   return (
     <div className="min-h-screen min-h-[100dvh] bg-stone-100 font-sans text-stone-900 pb-safe">
       <header className="bg-white border-b border-stone-200 p-4 pt-safe sticky top-0 z-30 shadow-sm">
         <div className="w-full max-w-md md:max-w-3xl lg:max-w-5xl mx-auto flex justify-between items-center">
-          <h1 className="text-xl font-bold tracking-tight text-stone-800">VentasPro</h1>
+          <button onClick={() => setShowSettings(true)} className="flex items-center gap-2" aria-label="Abrir configuración">
+            {profilePhoto ? (
+              <img src={profilePhoto} alt="" className="w-7 h-7 rounded-full object-cover shrink-0" />
+            ) : (
+              <div className="w-7 h-7 rounded-full bg-emerald-100 text-emerald-700 text-xs font-bold flex items-center justify-center shrink-0">
+                {initial}
+              </div>
+            )}
+            <h1 className="text-xl font-bold tracking-tight text-stone-800">{businessName}</h1>
+          </button>
           <div className="flex items-center gap-2">
             <div className={cn(
               "w-3 h-3 rounded-full",
@@ -235,6 +272,7 @@ export default function App() {
                   onSearchChange={setSearchQuery}
                   onCategoryChange={setSelectedCategory}
                   onAddToCart={handleAddToCart}
+                  lowStockThreshold={lowStockThreshold}
                 />
               </ErrorBoundary>
             </motion.div>
@@ -248,7 +286,7 @@ export default function App() {
               exit={{ opacity: 0, y: -10 }}
             >
               <ErrorBoundary label="Inventario">
-                <InventoryTab products={products} loading={isLoading} onUpdate={fetchProducts} />
+                <InventoryTab products={products} loading={isLoading} onUpdate={fetchProducts} lowStockThreshold={lowStockThreshold} />
               </ErrorBoundary>
             </motion.div>
           )}
@@ -261,7 +299,7 @@ export default function App() {
               exit={{ opacity: 0, y: -10 }}
             >
               <ErrorBoundary label="Cierre">
-                <ReportsTab products={products} onSessionClose={() => { fetchSession(); fetchProducts(); }} onProductsChange={fetchProducts} />
+                <ReportsTab products={products} onSessionClose={() => { fetchSession(); fetchProducts(); }} onProductsChange={fetchProducts} businessName={businessName} currencySymbol={settings.currency_symbol || '$'} />
               </ErrorBoundary>
             </motion.div>
           )}
@@ -323,12 +361,20 @@ export default function App() {
         cashInput={cashInput}
         transferInput={transferInput}
         loading={loading}
+        defaultPaymentMethod={defaultPaymentMethod}
         onClose={() => setShowPaymentModal(false)}
         onPaymentMethodChange={initializeSplitPayments}
         onCardChange={setSelectedCardId}
         onCashInputChange={handleCashInputChange}
         onTransferInputChange={handleTransferInputChange}
         onProcessSale={handleProcessSale}
+      />
+
+      <SettingsModal
+        isOpen={showSettings}
+        profilePhoto={profilePhoto}
+        onClose={() => setShowSettings(false)}
+        onSettingsChange={handleSettingsChange}
       />
     </div>
   );

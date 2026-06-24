@@ -12,6 +12,7 @@ interface VenderGridProps {
   selectedCategory: string;
   categories: string[];
   loading?: boolean;
+  lowStockThreshold?: number;
   onSearchChange: (q: string) => void;
   onCategoryChange: (cat: string) => void;
   onAddToCart: (product: Product) => void;
@@ -34,7 +35,7 @@ function ProductSkeleton() {
   );
 }
 
-export function VenderGrid({ products, searchQuery, selectedCategory, categories, loading = false, onSearchChange, onCategoryChange, onAddToCart }: VenderGridProps) {
+export function VenderGrid({ products, searchQuery, selectedCategory, categories, loading = false, lowStockThreshold = 5, onSearchChange, onCategoryChange, onAddToCart }: VenderGridProps) {
   const debouncedSearch = useDebounce(searchQuery, 300);
 
   const filteredProducts = products
@@ -125,7 +126,7 @@ export function VenderGrid({ products, searchQuery, selectedCategory, categories
                   <div className="text-[10px] uppercase font-black text-stone-500">
                     Stock: {product.stock}
                   </div>
-                  {product.stock <= 5 && product.stock > 0 && (
+                  {product.stock <= lowStockThreshold && product.stock > 0 && (
                     <div className="bg-amber-500 text-white text-[10px] font-black px-1.5 py-0.5 rounded-full uppercase">
                       Low
                     </div>

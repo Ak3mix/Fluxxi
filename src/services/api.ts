@@ -2,6 +2,7 @@ import { ProductRepository } from './repositories/productRepository';
 import { SalesRepository } from './repositories/salesRepository';
 import { MovementRepository } from './repositories/movementRepository';
 import { CardRepository } from './repositories/cardRepository';
+import { SettingsRepository, type SettingsMap } from './settingsRepository';
 import { dbService } from './database';
 import type { ProductInput, CardInput, MoveInput, SaleInput, SessionInput } from '../types';
 
@@ -100,5 +101,25 @@ export const api = {
       session = await SalesRepository.createSession({ start_time: new Date().toISOString() });
     }
     return session;
+  },
+
+  async getAllSettings(): Promise<SettingsMap> {
+    return SettingsRepository.getAll();
+  },
+
+  async saveSetting(key: string, value: string): Promise<void> {
+    return SettingsRepository.set(key, value);
+  },
+
+  async saveProfilePhoto(base64: string): Promise<string> {
+    return SettingsRepository.saveProfilePhoto(base64);
+  },
+
+  async getProfilePhoto(): Promise<string | null> {
+    return SettingsRepository.getProfilePhoto();
+  },
+
+  async deleteProfilePhoto(): Promise<void> {
+    return SettingsRepository.deleteProfilePhoto();
   },
 };

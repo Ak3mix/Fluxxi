@@ -15,10 +15,14 @@ export function ReportsTab({
   products,
   onSessionClose,
   onProductsChange,
+  businessName = 'VentasPro',
+  currencySymbol = '$',
 }: {
   products: Product[];
   onSessionClose: () => void;
   onProductsChange: () => void;
+  businessName?: string;
+  currencySymbol?: string;
 }) {
   const { addToast } = useToast();
   const [loading, setLoading] = useState(true);
@@ -141,6 +145,8 @@ export function ReportsTab({
         movements: data.movements,
         products,
         cards,
+        businessName,
+        currencySymbol,
       });
     } catch (e: any) {
       console.error('Excel export error:', e);
