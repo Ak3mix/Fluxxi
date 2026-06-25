@@ -45,18 +45,20 @@
             tools:replace="android:exported,android:theme" />
 
         <!-- Fix ZXing activities del plugin barcode scanner (Android 12+ requiere android:exported explícito) -->
+        <!-- tools:node="replace" reemplaza la declaración del plugin y añade android:exported explícito -->
         <activity
             android:name="com.google.zxing.client.android.CaptureActivity"
             android:exported="false"
-            tools:node="merge" />
+            android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
+            tools:node="replace" />
         <activity
             android:name="com.google.zxing.client.android.encode.EncodeActivity"
             android:exported="false"
-            tools:node="merge" />
+            tools:node="replace" />
         <activity
             android:name="com.google.zxing.client.android.HelpActivity"
             android:exported="false"
-            tools:node="merge" />
+            tools:node="replace" />
 
         <provider
             android:name="androidx.core.content.FileProvider"
