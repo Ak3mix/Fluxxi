@@ -37,6 +37,11 @@ jobs:
           sed -i 's|<activity android:name="com.google.zxing.client.android.encode.EncodeActivity"|<activity android:name="com.google.zxing.client.android.encode.EncodeActivity" android:exported="false"|' android/capacitor-cordova-android-plugins/src/main/AndroidManifest.xml
           sed -i 's|<activity android:name="com.google.zxing.client.android.HelpActivity"|<activity android:name="com.google.zxing.client.android.HelpActivity" android:exported="false"|' android/capacitor-cordova-android-plugins/src/main/AndroidManifest.xml
 
+      # Patch BarcodeScanner.java: remove WRITE_SETTINGS check, add onRequestPermissionResult
+      - name: Patch BarcodeScanner Plugin
+        run: |
+          cp patches/cordova-plugin-barcodescanner/BarcodeScanner.java android/capacitor-cordova-android-plugins/src/main/java/com/phonegap/plugins/barcodescanner/BarcodeScanner.java
+
       # ZXing layout files reference string resources missing from default res/values/
       # Safety net: only create if missing (committed file has all strings)
       - name: Fix ZXing Default Strings

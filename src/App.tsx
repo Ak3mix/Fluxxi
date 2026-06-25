@@ -173,7 +173,7 @@ export default function App() {
         }
       } catch (e) {
         keepScanning = false;
-        addToast('Error al abrir el escáner. Asegúrate de aceptar los permisos.', 'error');
+        addToast('Error al abrir el escáner. Acepta el permiso de cámara.', 'error');
       }
     }
   };
