@@ -50,20 +50,10 @@ jobs:
           sed -i 's/versionCode .*/versionCode ${{ github.run_number }}/' android/app/build.gradle
           sed -i 's/versionName .*/versionName "1.1.${{ github.run_number }}"/' android/app/build.gradle
 
-      # Fix AndroidManifest permissions (inside <application> is invalid, must be under <manifest>)
+      # Safety cleanup: remove any misplaced permissions/features that plugins may inject inside <application>
       - name: Fix Android Manifest
         run: |
-          # Remove misplaced uses-permission and uses-feature from inside <application>
-          sed -i '/<!-- Camera Permissions -->/d' android/app/src/main/AndroidManifest.xml
           sed -i '/<application>/,/<\/application>/{/<uses-permission/d; /<uses-feature/d}' android/app/src/main/AndroidManifest.xml
-          # Add all required permissions and features before <application>
-          sed -i '/<application/i \    <uses-feature android:name="android.hardware.camera.autofocus" android:required="false" />' android/app/src/main/AndroidManifest.xml
-          sed -i '/<application/i \    <uses-feature android:name="android.hardware.camera" android:required="false" />' android/app/src/main/AndroidManifest.xml
-          sed -i '/<application/i \    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" android:maxSdkVersion="32" />' android/app/src/main/AndroidManifest.xml
-          sed -i '/<application/i \    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" android:maxSdkVersion="32" />' android/app/src/main/AndroidManifest.xml
-          sed -i '/<application/i \    <uses-permission android:name="android.permission.READ_MEDIA_IMAGES" />' android/app/src/main/AndroidManifest.xml
-          sed -i '/<application/i \    <uses-permission android:name="android.permission.CAMERA" />' android/app/src/main/AndroidManifest.xml
-          sed -i '/<application/i \    <uses-permission android:name="android.permission.INTERNET" />' android/app/src/main/AndroidManifest.xml
 
       - name: Build APK
         run: |
