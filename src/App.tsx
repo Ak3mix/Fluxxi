@@ -171,8 +171,9 @@ export default function App() {
             addToast(`Código no encontrado: ${result.text}`, 'error');
           }
         }
-      } catch {
+      } catch (e) {
         keepScanning = false;
+        addToast('Error al abrir el escáner. Asegúrate de aceptar los permisos.', 'error');
       }
     }
   };

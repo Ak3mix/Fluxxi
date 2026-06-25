@@ -31,12 +31,11 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
-      # Fix ZXing activities + remove WRITE_SETTINGS (alarming to users, not needed)
+      # Fix ZXing activities missing android:exported
       - name: Fix ZXing Library Manifest
         run: |
           sed -i 's|<activity android:name="com.google.zxing.client.android.encode.EncodeActivity"|<activity android:name="com.google.zxing.client.android.encode.EncodeActivity" android:exported="false"|' android/capacitor-cordova-android-plugins/src/main/AndroidManifest.xml
           sed -i 's|<activity android:name="com.google.zxing.client.android.HelpActivity"|<activity android:name="com.google.zxing.client.android.HelpActivity" android:exported="false"|' android/capacitor-cordova-android-plugins/src/main/AndroidManifest.xml
-          sed -i '/name="android.permission.WRITE_SETTINGS"/d' android/capacitor-cordova-android-plugins/src/main/AndroidManifest.xml
 
       # ZXing layout files reference string resources missing from default res/values/
       # Safety net: only create if missing (committed file has all strings)

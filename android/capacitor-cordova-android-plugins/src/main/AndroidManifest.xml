@@ -23,6 +23,6 @@ xmlns:amazon="http://schemas.amazon.com/apk/res/android">
 </application>
 <uses-permission android:name="android.permission.CAMERA"/>
 <uses-permission android:name="android.permission.FLASHLIGHT"/>
-<!-- WRITE_SETTINGS removed via tools:node="remove" in app manifest -->
+<uses-permission android:name="android.permission.WRITE_SETTINGS"/>
 <uses-feature android:name="android.hardware.camera" android:required="false"/>
 </manifest>
