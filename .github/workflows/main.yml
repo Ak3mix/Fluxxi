@@ -31,6 +31,12 @@ jobs:
       - name: Sync Capacitor
         run: npx cap sync android
 
+      # Fix ZXing activities missing android:exported in cordova-plugin-barcodescanner
+      - name: Fix ZXing Library Manifest
+        run: |
+          sed -i 's|<activity android:name="com.google.zxing.client.android.encode.EncodeActivity"|<activity android:name="com.google.zxing.client.android.encode.EncodeActivity" android:exported="false"|' android/capacitor-cordova-android-plugins/src/main/AndroidManifest.xml
+          sed -i 's|<activity android:name="com.google.zxing.client.android.HelpActivity"|<activity android:name="com.google.zxing.client.android.HelpActivity" android:exported="false"|' android/capacitor-cordova-android-plugins/src/main/AndroidManifest.xml
+
       # Decode Keystore
       - name: Decode Keystore
         run: |
