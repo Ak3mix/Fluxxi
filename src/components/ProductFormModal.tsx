@@ -5,9 +5,8 @@ import { Modal } from './Modal';
 import { ImagePicker } from './ImagePicker';
 import { MigrationService } from '../services/migration';
 import { useToast } from '../contexts/ToastContext';
+import { BarcodeScanner } from '@capacitor-mlkit/barcode-scanning';
 import type { Product } from '../types';
-
-declare const cordova: any;
 
 export interface ProductFormData {
   name: string;
@@ -40,29 +39,28 @@ export function ProductFormModal({ isOpen, initialData, isSaving = false, onSave
   const [scanning, setScanning] = useState(false);
 
   const handleScan = async () => {
-    const scanner = cordova?.plugins?.barcodeScanner;
-    if (!scanner) {
-      addToast('Escáner no disponible', 'error');
+    const { supported } = await BarcodeScanner.isSupported();
+    if (!supported) {
+      addToast('Escáner no disponible en este dispositivo', 'error');
+      return;
+    }
+
+    const { camera } = await BarcodeScanner.requestPermissions();
+    if (camera !== 'granted') {
+      addToast('Permiso de cámara denegado', 'error');
       return;
     }
 
     setScanning(true);
+    document.querySelector('body')?.classList.add('barcode-scanner-active');
     try {
-      const result = await new Promise<{ text: string; format: string; cancelled: boolean }>((resolve, reject) => {
-        scanner.scan(resolve, reject, {
-          prompt: 'Coloca el código dentro del área',
-          formats: 'EAN_13,EAN_8,QR_CODE,CODE_128,CODE_39,PDF_417,UPC_A,UPC_E',
-          orientation: 'portrait',
-          showTorchButton: true,
-          showFlipCameraButton: true,
-        });
-      });
-
-      if (!result.cancelled && result.text) {
-        setCode(result.text);
+      const { barcodes } = await BarcodeScanner.scan();
+      if (barcodes.length > 0 && barcodes[0].code) {
+        setCode(barcodes[0].code);
       }
     } catch { /* user cancelled */ }
     finally {
+      document.querySelector('body')?.classList.remove('barcode-scanner-active');
       setScanning(false);
     }
   };

@@ -27,6 +27,9 @@ node_modules/
 *.keystore
 *.jks
 
+# Android user-specific
+android/local.properties
+
 # OS
 .DS_Store
 Thumbs.db

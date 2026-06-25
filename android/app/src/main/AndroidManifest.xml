@@ -37,27 +37,10 @@
 
         </activity>
 
-        <!-- Fix para activity del plugin barcode scanner (CaptureActivity) -->
-        <activity
-            android:name="com.phonegap.plugins.barcodescanner.BarcodeScannerActivity"
-            android:exported="false"
-            tools:replace="android:exported" />
-
-        <!-- Fix ZXing activities del plugin barcode scanner (Android 12+ requiere android:exported explícito) -->
-        <!-- tools:node="replace" reemplaza la declaración del plugin y añade android:exported explícito -->
-        <activity
-            android:name="com.google.zxing.client.android.CaptureActivity"
-            android:exported="false"
-            android:theme="@android:style/Theme.NoTitleBar.Fullscreen"
-            tools:node="replace" />
-        <activity
-            android:name="com.google.zxing.client.android.encode.EncodeActivity"
-            android:exported="false"
-            tools:node="replace" />
-        <activity
-            android:name="com.google.zxing.client.android.HelpActivity"
-            android:exported="false"
-            tools:node="replace" />
+        <!-- ML Kit Barcode Scanning dependency -->
+        <meta-data
+            android:name="com.google.mlkit.vision.DEPENDENCIES"
+            android:value="barcode_ui" />
 
         <provider
             android:name="androidx.core.content.FileProvider"

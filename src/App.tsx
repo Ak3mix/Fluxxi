@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ShoppingCart, Package, ClipboardList, Settings } from 'lucide-react';
+import { ShoppingCart, Package, ClipboardList, Settings, Scan } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { api } from './services/api';
 import { dbService } from './services/database';
@@ -16,8 +16,8 @@ import { VenderGrid } from './components/VenderGrid';
 import { CartModal } from './components/CartModal';
 import { PaymentModal } from './components/PaymentModal';
 import { SettingsModal } from './components/SettingsModal';
-declare const cordova: any;
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { BarcodeScanner } from '@capacitor-mlkit/barcode-scanning';
 import { App as CapacitorApp } from '@capacitor/app';
 import type { Product, Session, Card, SaleInput } from './types';
 import type { SettingsMap } from './services/settingsRepository';
@@ -111,8 +111,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    const promise = CapacitorApp.addListener('backButton', () => {
-      if (showSettings) {
+    const promise = CapacitorApp.addListener('backButton', async () => {
+      if (isScanning) {
+        await stopScan();
+      } else if (showSettings) {
         setShowSettings(false);
       } else if (showPaymentModal) {
         setShowPaymentModal(false);
@@ -125,7 +127,7 @@ export default function App() {
       }
     });
     return () => { promise.then(h => h.remove()); };
-  }, [showSettings, showPaymentModal, showCartModal, activeTab]);
+  }, [showSettings, showPaymentModal, showCartModal, activeTab, isScanning]);
 
   const handleAddToCart = async (product: Product) => {
     addToCart(product);
@@ -134,48 +136,43 @@ export default function App() {
     setTimeout(() => setCartPulse(false), 600);
   };
 
+  const [isScanning, setIsScanning] = useState(false);
+
   const handleBarcodeScan = async () => {
-    const scanner = cordova?.plugins?.barcodeScanner;
-    if (!scanner) {
-      addToast('Escáner no disponible', 'error');
+    if (isScanning) return;
+    const { supported } = await BarcodeScanner.isSupported();
+    if (!supported) {
+      addToast('Escáner no disponible en este dispositivo', 'error');
       return;
     }
 
-    const scanOptions = {
-      prompt: 'Coloca el código dentro del área',
-      formats: 'EAN_13,EAN_8,QR_CODE,CODE_128,CODE_39,PDF_417,UPC_A,UPC_E',
-      orientation: 'portrait' as const,
-      showTorchButton: true,
-      showFlipCameraButton: true,
-      disableSuccessBeep: false,
-    };
-
-    let keepScanning = true;
-    while (keepScanning) {
-      try {
-        const result = await new Promise<{ text: string; format: string; cancelled: boolean }>((resolve, reject) => {
-          scanner.scan(resolve, reject, scanOptions);
-        });
-
-        if (result.cancelled) {
-          keepScanning = false;
-          break;
-        }
-
-        if (result.text) {
-          const product = await api.getProductByCode(result.text);
-          if (product) {
-            handleAddToCart(product);
-          } else {
-            try { await Haptics.impact({ style: ImpactStyle.Heavy }); } catch {}
-            addToast(`Código no encontrado: ${result.text}`, 'error');
-          }
-        }
-      } catch (e) {
-        keepScanning = false;
-        addToast('Error al abrir el escáner. Acepta el permiso de cámara.', 'error');
-      }
+    const { camera } = await BarcodeScanner.requestPermissions();
+    if (camera !== 'granted') {
+      addToast('Permiso de cámara denegado', 'error');
+      return;
     }
+
+    setIsScanning(true);
+    document.querySelector('body')?.classList.add('barcode-scanner-active');
+    const listener = await BarcodeScanner.addListener('barcodeScanned', async (result) => {
+      const code = result.barcode?.code;
+      if (!code) return;
+      const product = await api.getProductByCode(code);
+      if (product) {
+        handleAddToCart(product);
+      } else {
+        try { await Haptics.impact({ style: ImpactStyle.Heavy }); } catch {}
+        addToast(`Código no encontrado: ${code}`, 'error');
+      }
+    });
+    await BarcodeScanner.startScan();
+  };
+
+  const stopScan = async () => {
+    setIsScanning(false);
+    document.querySelector('body')?.classList.remove('barcode-scanner-active');
+    await BarcodeScanner.removeAllListeners();
+    await BarcodeScanner.stopScan();
   };
 
   const initializeSplitPayments = (method: 'cash' | 'transfer' | 'split') => {

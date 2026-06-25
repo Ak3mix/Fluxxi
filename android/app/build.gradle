@@ -3,6 +3,9 @@ apply plugin: 'com.android.application'
 android {
     namespace = "com.example.app"
     compileSdk = rootProject.ext.compileSdkVersion
+    buildFeatures {
+        dataBinding true
+    }
     defaultConfig {
         applicationId "com.example.app"
         minSdkVersion rootProject.ext.minSdkVersion
