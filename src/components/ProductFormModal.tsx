@@ -1,11 +1,13 @@
 import React, { useState, useEffect } from 'react';
 import { Scan } from 'lucide-react';
-import { BarcodeScanner } from '@simplymobile/barcode-scanner';
 import { cn } from '../utils/cn';
 import { Modal } from './Modal';
 import { ImagePicker } from './ImagePicker';
 import { MigrationService } from '../services/migration';
+import { useToast } from '../contexts/ToastContext';
 import type { Product } from '../types';
+
+declare const cordova: any;
 
 export interface ProductFormData {
   name: string;
@@ -26,6 +28,7 @@ interface Props {
 }
 
 export function ProductFormModal({ isOpen, initialData, isSaving = false, onSave, onClose }: Props) {
+  const { addToast } = useToast();
   const [name, setName] = useState('');
   const [code, setCode] = useState('');
   const [price, setPrice] = useState('');
@@ -37,23 +40,29 @@ export function ProductFormModal({ isOpen, initialData, isSaving = false, onSave
   const [scanning, setScanning] = useState(false);
 
   const handleScan = async () => {
+    const scanner = cordova?.plugins?.barcodeScanner;
+    if (!scanner) {
+      addToast('Escáner no disponible', 'error');
+      return;
+    }
+
+    setScanning(true);
     try {
-      setScanning(true);
-      const status = await BarcodeScanner.checkPermission({ force: true });
-      if (!status.granted) return;
-      await BarcodeScanner.prepare();
-      BarcodeScanner.hideBackground();
-      document.body.style.background = 'transparent';
-      const root = document.getElementById('root');
-      if (root) root.style.background = 'transparent';
-      const result = await BarcodeScanner.startScan();
-      if (result?.content) setCode(result.content);
+      const result = await new Promise<{ text: string; format: string; cancelled: boolean }>((resolve, reject) => {
+        scanner.scan(resolve, reject, {
+          prompt: 'Coloca el código dentro del área',
+          formats: 'EAN_13,EAN_8,QR_CODE,CODE_128,CODE_39,PDF_417,UPC_A,UPC_E',
+          orientation: 'portrait',
+          showTorchButton: true,
+          showFlipCameraButton: true,
+        });
+      });
+
+      if (!result.cancelled && result.text) {
+        setCode(result.text);
+      }
     } catch { /* user cancelled */ }
     finally {
-      BarcodeScanner.showBackground();
-      document.body.style.background = '';
-      const root = document.getElementById('root');
-      if (root) root.style.background = '';
       setScanning(false);
     }
   };

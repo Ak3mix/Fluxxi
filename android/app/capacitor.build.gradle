@@ -16,7 +16,6 @@ dependencies {
     implementation project(':capacitor-haptics')
     implementation project(':capacitor-share')
     implementation project(':capawesome-capacitor-file-picker')
-    implementation project(':simplymobile-barcode-scanner')
 
 }
 

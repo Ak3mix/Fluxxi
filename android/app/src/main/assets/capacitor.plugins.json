@@ -26,9 +26,5 @@
 	{
 		"pkg": "@capawesome/capacitor-file-picker",
 		"classpath": "io.capawesome.capacitorjs.plugins.filepicker.FilePickerPlugin"
-	},
-	{
-		"pkg": "@simplymobile/barcode-scanner",
-		"classpath": "pl.simplymobile.plugins.barcodescanner.BarcodeScanner"
 	}
 ]
