@@ -43,11 +43,17 @@ export function ProductFormModal({ isOpen, initialData, isSaving = false, onSave
       if (!status.granted) return;
       await BarcodeScanner.prepare();
       BarcodeScanner.hideBackground();
+      document.body.style.background = 'transparent';
+      const root = document.getElementById('root');
+      if (root) root.style.background = 'transparent';
       const result = await BarcodeScanner.startScan();
       if (result?.content) setCode(result.content);
     } catch { /* user cancelled */ }
     finally {
       BarcodeScanner.showBackground();
+      document.body.style.background = '';
+      const root = document.getElementById('root');
+      if (root) root.style.background = '';
       setScanning(false);
     }
   };

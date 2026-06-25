@@ -143,6 +143,9 @@ export default function App() {
       }
       await BarcodeScanner.prepare();
       BarcodeScanner.hideBackground();
+      document.body.style.background = 'transparent';
+      const root = document.getElementById('root');
+      if (root) root.style.background = 'transparent';
       let keepScanning = true;
       while (keepScanning) {
         try {
@@ -164,6 +167,9 @@ export default function App() {
       // permission error
     } finally {
       BarcodeScanner.showBackground();
+      document.body.style.background = '';
+      const root = document.getElementById('root');
+      if (root) root.style.background = '';
     }
   };
 
