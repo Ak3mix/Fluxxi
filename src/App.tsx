@@ -62,6 +62,7 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [cartPulse, setCartPulse] = useState(false);
+  const [isScanning, setIsScanning] = useState(false);
 
   const categories = ['all', ...Array.from(new Set(products.map(p => p.category).filter(Boolean)))] as string[];
 
@@ -110,34 +111,6 @@ export default function App() {
     init();
   }, []);
 
-  useEffect(() => {
-    const promise = CapacitorApp.addListener('backButton', async () => {
-      if (isScanning) {
-        await stopScan();
-      } else if (showSettings) {
-        setShowSettings(false);
-      } else if (showPaymentModal) {
-        setShowPaymentModal(false);
-      } else if (showCartModal) {
-        setShowCartModal(false);
-      } else if (activeTab !== 'vender') {
-        setActiveTab('vender');
-      } else {
-        CapacitorApp.exitApp();
-      }
-    });
-    return () => { promise.then(h => h.remove()); };
-  }, [showSettings, showPaymentModal, showCartModal, activeTab, isScanning]);
-
-  const handleAddToCart = async (product: Product) => {
-    addToCart(product);
-    setCartPulse(true);
-    try { await Haptics.impact({ style: ImpactStyle.Medium }); } catch {}
-    setTimeout(() => setCartPulse(false), 600);
-  };
-
-  const [isScanning, setIsScanning] = useState(false);
-
   const handleBarcodeScan = async () => {
     if (isScanning) return;
     const { supported } = await BarcodeScanner.isSupported();
@@ -173,6 +146,32 @@ export default function App() {
     document.querySelector('body')?.classList.remove('barcode-scanner-active');
     await BarcodeScanner.removeAllListeners();
     await BarcodeScanner.stopScan();
+  };
+
+  useEffect(() => {
+    const promise = CapacitorApp.addListener('backButton', async () => {
+      if (isScanning) {
+        await stopScan();
+      } else if (showSettings) {
+        setShowSettings(false);
+      } else if (showPaymentModal) {
+        setShowPaymentModal(false);
+      } else if (showCartModal) {
+        setShowCartModal(false);
+      } else if (activeTab !== 'vender') {
+        setActiveTab('vender');
+      } else {
+        CapacitorApp.exitApp();
+      }
+    });
+    return () => { promise.then(h => h.remove()); };
+  }, [showSettings, showPaymentModal, showCartModal, activeTab, isScanning]);
+
+  const handleAddToCart = async (product: Product) => {
+    addToCart(product);
+    setCartPulse(true);
+    try { await Haptics.impact({ style: ImpactStyle.Medium }); } catch {}
+    setTimeout(() => setCartPulse(false), 600);
   };
 
   const initializeSplitPayments = (method: 'cash' | 'transfer' | 'split') => {

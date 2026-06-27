@@ -6,6 +6,9 @@ android {
     buildFeatures {
         dataBinding true
     }
+    dataBinding {
+        enabled = true
+    }
     defaultConfig {
         applicationId "com.example.app"
         minSdkVersion rootProject.ext.minSdkVersion
