@@ -80,11 +80,3 @@
   }
 }
 
-/* ML Kit Barcode Scanner: camera renders behind the WebView, hide WebView content during scan */
-body.barcode-scanner-active {
-  visibility: hidden;
-}
-/* Ensure the scanning UI remains visible */
-body.barcode-scanner-active .barcode-scanner-modal {
-  visibility: visible;
-}

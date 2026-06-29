@@ -1,4 +1,4 @@
-import { Image as ImageIcon, Package, Search, Scan } from 'lucide-react';
+import { Image as ImageIcon, Package, Search } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../utils/cn';
 import { useDebounce } from '../hooks/useDebounce';
@@ -16,7 +16,6 @@ interface VenderGridProps {
   onSearchChange: (q: string) => void;
   onCategoryChange: (cat: string) => void;
   onAddToCart: (product: Product) => void;
-  onBarcodeScan?: () => void;
 }
 
 function ProductSkeleton() {
@@ -36,7 +35,7 @@ function ProductSkeleton() {
   );
 }
 
-export function VenderGrid({ products, searchQuery, selectedCategory, categories, loading = false, lowStockThreshold = 5, onSearchChange, onCategoryChange, onAddToCart, onBarcodeScan }: VenderGridProps) {
+export function VenderGrid({ products, searchQuery, selectedCategory, categories, loading = false, lowStockThreshold = 5, onSearchChange, onCategoryChange, onAddToCart }: VenderGridProps) {
   const debouncedSearch = useDebounce(searchQuery, 300);
 
   const filteredProducts = products
@@ -66,15 +65,6 @@ export function VenderGrid({ products, searchQuery, selectedCategory, categories
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
-          {onBarcodeScan && (
-            <button
-              onClick={onBarcodeScan}
-              className="bg-white border border-stone-200 text-stone-600 p-3 rounded-xl shrink-0 active:scale-95 transition-transform"
-              aria-label="Escanear código de barras"
-            >
-              <Scan size={20} />
-            </button>
-          )}
         </div>
 
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">

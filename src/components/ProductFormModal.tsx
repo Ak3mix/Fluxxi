@@ -1,11 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { Scan } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { Modal } from './Modal';
 import { ImagePicker } from './ImagePicker';
 import { MigrationService } from '../services/migration';
 import { useToast } from '../contexts/ToastContext';
-import { BarcodeScanner } from '@capacitor-mlkit/barcode-scanning';
 import type { Product } from '../types';
 
 export interface ProductFormData {
@@ -36,34 +34,6 @@ export function ProductFormModal({ isOpen, initialData, isSaving = false, onSave
   const [category, setCategory] = useState('');
   const [image, setImage] = useState<string | null>(null);
   const [errors, setErrors] = useState<{ name?: string; price?: string; stock?: string }>({});
-  const [scanning, setScanning] = useState(false);
-
-  const handleScan = async () => {
-    const { supported } = await BarcodeScanner.isSupported();
-    if (!supported) {
-      addToast('Escáner no disponible en este dispositivo', 'error');
-      return;
-    }
-
-    const { camera } = await BarcodeScanner.requestPermissions();
-    if (camera !== 'granted') {
-      addToast('Permiso de cámara denegado', 'error');
-      return;
-    }
-
-    setScanning(true);
-    document.querySelector('body')?.classList.add('barcode-scanner-active');
-    try {
-      const { barcodes } = await BarcodeScanner.scan();
-      if (barcodes.length > 0 && barcodes[0].code) {
-        setCode(barcodes[0].code);
-      }
-    } catch { /* user cancelled */ }
-    finally {
-      document.querySelector('body')?.classList.remove('barcode-scanner-active');
-      setScanning(false);
-    }
-  };
 
   useEffect(() => {
     if (initialData) {
@@ -148,23 +118,12 @@ export function ProductFormModal({ isOpen, initialData, isSaving = false, onSave
           </div>
           <div>
             <label className="text-[10px] uppercase font-bold text-stone-500 mb-1 block">Código de barras</label>
-            <div className="flex gap-2">
-              <input
-                value={code}
-                onChange={e => setCode(e.target.value)}
-                placeholder="Opcional"
-                className="flex-1 bg-stone-50 border-none rounded-xl p-3 font-mono"
-              />
-              <button
-                type="button"
-                disabled={scanning}
-                onClick={handleScan}
-                className="bg-emerald-50 text-emerald-600 p-3 rounded-xl shrink-0 disabled:opacity-50"
-                aria-label="Escanear código de barras"
-              >
-                <Scan size={20} />
-              </button>
-            </div>
+            <input
+              value={code}
+              onChange={e => setCode(e.target.value)}
+              placeholder="Opcional"
+              className="w-full bg-stone-50 border-none rounded-xl p-3 font-mono"
+            />
           </div>
           <div>
             <label className="text-[10px] uppercase font-bold text-stone-500 mb-1 block">Categoría</label>

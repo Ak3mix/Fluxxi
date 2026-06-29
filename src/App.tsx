@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ShoppingCart, Package, ClipboardList, Settings, Scan } from 'lucide-react';
+import { ShoppingCart, Package, ClipboardList, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { api } from './services/api';
 import { dbService } from './services/database';
@@ -17,7 +17,6 @@ import { CartModal } from './components/CartModal';
 import { PaymentModal } from './components/PaymentModal';
 import { SettingsModal } from './components/SettingsModal';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
-import { BarcodeScanner } from '@capacitor-mlkit/barcode-scanning';
 import { App as CapacitorApp } from '@capacitor/app';
 import type { Product, Session, Card, SaleInput } from './types';
 import type { SettingsMap } from './services/settingsRepository';
@@ -62,7 +61,6 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [cartPulse, setCartPulse] = useState(false);
-  const [isScanning, setIsScanning] = useState(false);
 
   const categories = ['all', ...Array.from(new Set(products.map(p => p.category).filter(Boolean)))] as string[];
 
@@ -111,48 +109,9 @@ export default function App() {
     init();
   }, []);
 
-  const handleBarcodeScan = async () => {
-    if (isScanning) return;
-    const { supported } = await BarcodeScanner.isSupported();
-    if (!supported) {
-      addToast('Escáner no disponible en este dispositivo', 'error');
-      return;
-    }
-
-    const { camera } = await BarcodeScanner.requestPermissions();
-    if (camera !== 'granted') {
-      addToast('Permiso de cámara denegado', 'error');
-      return;
-    }
-
-    setIsScanning(true);
-    document.querySelector('body')?.classList.add('barcode-scanner-active');
-    const listener = await BarcodeScanner.addListener('barcodeScanned', async (result) => {
-      const code = result.barcode?.code;
-      if (!code) return;
-      const product = await api.getProductByCode(code);
-      if (product) {
-        handleAddToCart(product);
-      } else {
-        try { await Haptics.impact({ style: ImpactStyle.Heavy }); } catch {}
-        addToast(`Código no encontrado: ${code}`, 'error');
-      }
-    });
-    await BarcodeScanner.startScan();
-  };
-
-  const stopScan = async () => {
-    setIsScanning(false);
-    document.querySelector('body')?.classList.remove('barcode-scanner-active');
-    await BarcodeScanner.removeAllListeners();
-    await BarcodeScanner.stopScan();
-  };
-
   useEffect(() => {
-    const promise = CapacitorApp.addListener('backButton', async () => {
-      if (isScanning) {
-        await stopScan();
-      } else if (showSettings) {
+    const promise = CapacitorApp.addListener('backButton', () => {
+      if (showSettings) {
         setShowSettings(false);
       } else if (showPaymentModal) {
         setShowPaymentModal(false);
@@ -165,7 +124,7 @@ export default function App() {
       }
     });
     return () => { promise.then(h => h.remove()); };
-  }, [showSettings, showPaymentModal, showCartModal, activeTab, isScanning]);
+  }, [showSettings, showPaymentModal, showCartModal, activeTab]);
 
   const handleAddToCart = async (product: Product) => {
     addToCart(product);
@@ -315,7 +274,7 @@ export default function App() {
                   onCategoryChange={setSelectedCategory}
                   onAddToCart={handleAddToCart}
                   lowStockThreshold={lowStockThreshold}
-                  onBarcodeScan={handleBarcodeScan}
+
                 />
               </ErrorBoundary>
             </motion.div>
