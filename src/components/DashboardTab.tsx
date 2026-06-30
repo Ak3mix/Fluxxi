@@ -78,16 +78,18 @@ export function DashboardTab() {
           <div className="flex items-center gap-3 mb-3">
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-sm bg-emerald-500" />
-              <span className="text-[10px] text-stone-500">Bruta</span>
+              <span className="text-[10px] text-stone-500">Ventas</span>
             </div>
             <div className="flex items-center gap-1.5">
               <div className="w-3 h-3 rounded-sm bg-blue-500" />
-              <span className="text-[10px] text-stone-500">Neta</span>
+              <span className="text-[10px] text-stone-500">Ganancia Neta</span>
             </div>
           </div>
-          <div className="flex items-end gap-2 h-32">
+          <div className="flex items-end gap-2" style={{ height: '140px' }}>
             {weeklySales.map((w, i) => (
-              <div key={i} className="flex-1 flex flex-col items-center gap-1">
+              <div key={i} className="flex-1 flex flex-col items-center gap-0.5 self-end">
+                <span className="text-[9px] font-bold text-stone-600 leading-tight">{formatCurrency(w.total)}</span>
+                <span className="text-[8px] font-medium text-blue-600 leading-tight">{formatCurrency(w.net)}</span>
                 <div className="flex gap-0.5 w-full items-end justify-center">
                   <div
                     className="w-[40%] bg-emerald-500 rounded-t-sm transition-all"
