@@ -4,7 +4,7 @@ import { MovementRepository } from './repositories/movementRepository';
 import { CardRepository } from './repositories/cardRepository';
 import { SettingsRepository, type SettingsMap } from './settingsRepository';
 import { dbService } from './database';
-import type { ProductInput, CardInput, MoveInput, SaleInput, SessionInput } from '../types';
+import type { ProductInput, CardInput, MoveInput, SaleInput, SessionInput, DashboardData } from '../types';
 
 export const api = {
   async getProducts() {
@@ -125,5 +125,17 @@ export const api = {
 
   async deleteProfilePhoto(): Promise<void> {
     return SettingsRepository.deleteProfilePhoto();
+  },
+
+  async getDashboardData(): Promise<DashboardData> {
+    const [todayStats, topProducts, lowStockCount, productsWithoutCode, recentSales, weeklySales] = await Promise.all([
+      SalesRepository.getTodayStats(),
+      SalesRepository.getTopProducts(5),
+      SalesRepository.getLowStockCount(parseInt(await SettingsRepository.get('low_stock_threshold') || '5', 10)),
+      SalesRepository.getProductsWithoutCodeCount(),
+      SalesRepository.getRecentSales(5),
+      SalesRepository.getWeeklySales(),
+    ]);
+    return { todayStats, topProducts, lowStockCount, productsWithoutCode, recentSales, weeklySales };
   },
 };

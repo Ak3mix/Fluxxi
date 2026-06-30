@@ -108,3 +108,21 @@ export interface SessionInput {
   start_time?: string;
   name?: string;
 }
+
+export interface TodayStats {
+  totalSales: number;
+  totalTransfer: number;
+  totalSplit: number;
+  totalNet: number;
+  ticketCount: number;
+  cancelledCount: number;
+}
+
+export interface DashboardData {
+  todayStats: TodayStats;
+  topProducts: { name: string; quantity: number; total: number }[];
+  lowStockCount: number;
+  productsWithoutCode: number;
+  recentSales: { id: number; total: number; payment_method: string; created_at: string }[];
+  weeklySales: { day: string; total: number }[];
+}

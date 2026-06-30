@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useCallback } from 'react';
-import { ShoppingCart, Package, ClipboardList, Settings } from 'lucide-react';
+import { LayoutDashboard, ShoppingCart, Package, ClipboardList, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { api } from './services/api';
 import { dbService } from './services/database';
@@ -12,6 +12,7 @@ import { ErrorBoundary } from './components/ErrorBoundary';
 import { NavButton } from './components/NavButton';
 import { InventoryTab } from './components/InventoryTab';
 import { ReportsTab } from './components/ReportsTab';
+import { DashboardTab } from './components/DashboardTab';
 import { VenderGrid } from './components/VenderGrid';
 import { CartModal } from './components/CartModal';
 import { PaymentModal } from './components/PaymentModal';
@@ -22,6 +23,7 @@ import type { Product, Session, Card, SaleInput } from './types';
 import type { SettingsMap } from './services/settingsRepository';
 
 const tabLabels: Record<string, string> = {
+  dashboard: 'Dashboard',
   vender: 'Vender',
   inventario: 'Inventario',
   reportes: 'Cierre',
@@ -29,7 +31,7 @@ const tabLabels: Record<string, string> = {
 
 export default function App() {
   const { addToast } = useToast();
-  const [activeTab, setActiveTab] = useState<'vender' | 'inventario' | 'reportes'>('vender');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'vender' | 'inventario' | 'reportes'>('dashboard');
   const [products, setProducts] = useState<Product[]>([]);
   const { cart, addToCart, removeFromCart, updateCartQuantity, clearCart, cartTotal, cartQuantity } = usePersistedCart();
   const [isLoading, setIsLoading] = useState(true);
@@ -117,8 +119,8 @@ export default function App() {
         setShowPaymentModal(false);
       } else if (showCartModal) {
         setShowCartModal(false);
-      } else if (activeTab !== 'vender') {
-        setActiveTab('vender');
+      } else if (activeTab !== 'dashboard') {
+        setActiveTab('dashboard');
       } else {
         CapacitorApp.exitApp();
       }
@@ -256,6 +258,19 @@ export default function App() {
 
       <main className="w-full max-w-md md:max-w-3xl lg:max-w-5xl mx-auto p-4 pb-24">
         <AnimatePresence mode="wait">
+          {activeTab === 'dashboard' && (
+            <motion.div
+              key="dashboard"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
+              <ErrorBoundary label="Dashboard">
+                <DashboardTab />
+              </ErrorBoundary>
+            </motion.div>
+          )}
+
           {activeTab === 'vender' && (
             <motion.div
               key="vender"
@@ -309,6 +324,7 @@ export default function App() {
       </main>
 
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 p-2 pb-safe flex justify-around items-center z-40">
+        <NavButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard size={20} />} label="Dashboard" ariaLabel="Ir a Dashboard" />
         <NavButton active={activeTab === 'vender'} onClick={() => setActiveTab('vender')} icon={<ShoppingCart size={20} />} label="Vender" ariaLabel="Ir a Vender" />
         <NavButton active={activeTab === 'inventario'} onClick={() => setActiveTab('inventario')} icon={<Package size={20} />} label="Inventario" ariaLabel="Ir a Inventario" />
         <NavButton active={activeTab === 'reportes'} onClick={() => setActiveTab('reportes')} icon={<ClipboardList size={20} />} label="Cierre" ariaLabel="Ir a Cierre" />

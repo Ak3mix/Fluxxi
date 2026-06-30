@@ -114,5 +114,98 @@ export const SalesRepository = {
   async getSessionHistory() {
     const result = await dbService.query('SELECT * FROM sessions WHERE is_closed = 1 AND (deleted IS NULL OR deleted = 0) ORDER BY id DESC');
     return result.values || [];
-  }
+  },
+
+  async getTodayStats() {
+    const today = new Date().toISOString().slice(0, 10);
+    const result = await dbService.query(
+      `SELECT
+        COALESCE(SUM(s.total), 0) as total_sales,
+        COALESCE(SUM(CASE WHEN s.payment_method = 'transfer' THEN s.total ELSE 0 END), 0) as total_transfer,
+        COALESCE(SUM(CASE WHEN s.payment_method = 'split' THEN s.total ELSE 0 END), 0) as total_split,
+        COUNT(*) as ticket_count,
+        COALESCE(SUM(CASE WHEN s.cancelled = 1 THEN 1 ELSE 0 END), 0) as cancelled_count
+      FROM sales s
+      WHERE date(s.created_at) = ?`,
+      [today]
+    );
+    const stats = result.values?.[0] || { total_sales: 0, total_transfer: 0, total_split: 0, ticket_count: 0, cancelled_count: 0 };
+
+    const profitResult = await dbService.query(
+      `SELECT COALESCE(SUM((si.unit_price - p.cost) * si.quantity), 0) as total_net
+      FROM sale_items si
+      JOIN products p ON si.product_id = p.id
+      JOIN sales s ON si.sale_id = s.id
+      WHERE date(s.created_at) = ? AND (s.cancelled IS NULL OR s.cancelled = 0)`,
+      [today]
+    );
+
+    return {
+      totalSales: stats.total_sales || 0,
+      totalTransfer: stats.total_transfer || 0,
+      totalSplit: stats.total_split || 0,
+      totalNet: profitResult.values?.[0]?.total_net || 0,
+      ticketCount: stats.ticket_count || 0,
+      cancelledCount: stats.cancelled_count || 0,
+    };
+  },
+
+  async getTopProducts(limit: number = 5) {
+    const result = await dbService.query(
+      `SELECT p.name, SUM(si.quantity) as quantity, SUM(si.subtotal) as total
+      FROM sale_items si
+      JOIN products p ON si.product_id = p.id
+      JOIN sales s ON si.sale_id = s.id
+      WHERE (s.cancelled IS NULL OR s.cancelled = 0)
+      GROUP BY si.product_id
+      ORDER BY quantity DESC
+      LIMIT ?`,
+      [limit]
+    );
+    return result.values || [];
+  },
+
+  async getLowStockCount(threshold: number = 5) {
+    const result = await dbService.query(
+      'SELECT COUNT(*) as count FROM products WHERE stock <= ? AND (deleted IS NULL OR deleted = 0)',
+      [threshold]
+    );
+    return result.values?.[0]?.count || 0;
+  },
+
+  async getProductsWithoutCodeCount() {
+    const result = await dbService.query(
+      "SELECT COUNT(*) as count FROM products WHERE (code IS NULL OR code = '') AND (deleted IS NULL OR deleted = 0)"
+    );
+    return result.values?.[0]?.count || 0;
+  },
+
+  async getRecentSales(limit: number = 5) {
+    const result = await dbService.query(
+      `SELECT id, total, payment_method, created_at
+      FROM sales
+      WHERE (cancelled IS NULL OR cancelled = 0)
+      ORDER BY created_at DESC
+      LIMIT ?`,
+      [limit]
+    );
+    return result.values || [];
+  },
+
+  async getWeeklySales() {
+    const days: { day: string; total: number }[] = [];
+    for (let i = 6; i >= 0; i--) {
+      const d = new Date();
+      d.setDate(d.getDate() - i);
+      const dateStr = d.toISOString().slice(0, 10);
+      const dayLabel = d.toLocaleDateString('es', { weekday: 'short' }).slice(0, 3);
+      const result = await dbService.query(
+        `SELECT COALESCE(SUM(total), 0) as total FROM sales
+        WHERE date(created_at) = ? AND (cancelled IS NULL OR cancelled = 0)`,
+        [dateStr]
+      );
+      days.push({ day: dayLabel, total: result.values?.[0]?.total || 0 });
+    }
+    return days;
+  },
 };
