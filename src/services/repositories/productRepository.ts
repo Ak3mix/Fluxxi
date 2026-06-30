@@ -3,23 +3,33 @@ import { Capacitor } from '@capacitor/core';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import type { ProductInput } from '../../types';
 
+const resolvedImageCache = new Map<string, string | undefined | null>();
+
 async function resolveImagePath(path: string | null | undefined): Promise<string | undefined> {
   if (!path) return undefined;
   if (path.startsWith('data:image') || path.startsWith('http')) return path;
+  if (resolvedImageCache.has(path)) {
+    const cached = resolvedImageCache.get(path);
+    return cached === null ? undefined : cached;
+  }
 
   if (Capacitor.isNativePlatform()) {
     try {
-      const uri = await Filesystem.getUri({
-        path: path,
-        directory: Directory.Data,
-      });
-      return Capacitor.convertFileSrc(uri.uri);
+      const uri = await Filesystem.getUri({ path, directory: Directory.Data });
+      const result = Capacitor.convertFileSrc(uri.uri);
+      resolvedImageCache.set(path, result);
+      return result;
     } catch (e) {
-      console.error('Error resolving image path', e);
+      resolvedImageCache.set(path, null);
       return undefined;
     }
   }
+  resolvedImageCache.set(path, path);
   return path;
+}
+
+export function clearImageCache() {
+  resolvedImageCache.clear();
 }
 
 export const ProductRepository = {
@@ -46,6 +56,7 @@ export const ProductRepository = {
       'UPDATE products SET name = ?, price = ?, cost = ?, stock = ?, category = ?, image_path = ? WHERE id = ?',
       [product.name, product.price, product.cost, product.stock, product.category, product.image, id]
     );
+    resolvedImageCache.clear();
     return { success: true };
   },
 

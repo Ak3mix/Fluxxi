@@ -25,21 +25,27 @@ function formatSaleDate(dateStr: string) {
   return `${date} ${time}`;
 }
 
-export function DashboardTab() {
+interface Props {
+  lowStockThreshold: number;
+}
+
+export function DashboardTab({ lowStockThreshold }: Props) {
   const [data, setData] = useState<DashboardData | null>(cachedData);
   const [loading, setLoading] = useState(!cachedData);
   const mountedRef = useRef(true);
 
   useEffect(() => {
     mountedRef.current = true;
-    api.getDashboardData().then(d => {
-      if (!mountedRef.current) return;
-      cachedData = d;
-      setData(d);
-      setLoading(false);
-    });
+    api.getDashboardData(lowStockThreshold)
+      .then(d => {
+        if (!mountedRef.current) return;
+        cachedData = d;
+        setData(d);
+        setLoading(false);
+      })
+      .catch(e => { console.error(e); setLoading(false); });
     return () => { mountedRef.current = false; };
-  }, []);
+  }, [lowStockThreshold]);
 
   if (loading) {
     return (

@@ -118,34 +118,31 @@ export const SalesRepository = {
 
   async getTodayStats() {
     const today = new Date().toISOString().slice(0, 10);
-    const [statsResult, profitResult] = await Promise.all([
-      dbService.query(
-        `SELECT
-          COALESCE(SUM(s.total), 0) as total_sales,
-          COALESCE(SUM(CASE WHEN s.payment_method = 'transfer' THEN s.total ELSE 0 END), 0) as total_transfer,
-          COALESCE(SUM(CASE WHEN s.payment_method = 'split' THEN s.total ELSE 0 END), 0) as total_split,
-          COUNT(*) as ticket_count,
-          COALESCE(SUM(CASE WHEN s.cancelled = 1 THEN 1 ELSE 0 END), 0) as cancelled_count
-        FROM sales s
-        WHERE substr(s.created_at, 1, 10) = ? AND (s.cancelled IS NULL OR s.cancelled = 0)`,
-        [today]
-      ),
-      dbService.query(
-        `SELECT COALESCE(SUM((si.unit_price - p.cost) * si.quantity), 0) as total_net
+    const result = await dbService.query(
+      `SELECT
+        COALESCE(SUM(s.total), 0) as total_sales,
+        COALESCE(SUM(CASE WHEN s.payment_method = 'transfer' THEN s.total ELSE 0 END), 0) as total_transfer,
+        COALESCE(SUM(CASE WHEN s.payment_method = 'split' THEN s.total ELSE 0 END), 0) as total_split,
+        COUNT(*) as ticket_count,
+        COALESCE(SUM(CASE WHEN s.cancelled = 1 THEN 1 ELSE 0 END), 0) as cancelled_count,
+        COALESCE(SUM(si.profit), 0) as total_net
+      FROM sales s
+      LEFT JOIN (
+        SELECT si.sale_id, SUM((si.unit_price - p.cost) * si.quantity) as profit
         FROM sale_items si
         JOIN products p ON si.product_id = p.id
-        JOIN sales s ON si.sale_id = s.id
-        WHERE substr(s.created_at, 1, 10) = ? AND (s.cancelled IS NULL OR s.cancelled = 0)`,
-        [today]
-      ),
-    ]);
-    const stats = statsResult.values?.[0] || { total_sales: 0, total_transfer: 0, total_split: 0, ticket_count: 0, cancelled_count: 0 };
+        GROUP BY si.sale_id
+      ) si ON si.sale_id = s.id
+      WHERE substr(s.created_at, 1, 10) = ? AND (s.cancelled IS NULL OR s.cancelled = 0)`,
+      [today]
+    );
+    const stats = result.values?.[0] || {};
 
     return {
       totalSales: stats.total_sales || 0,
       totalTransfer: stats.total_transfer || 0,
       totalSplit: stats.total_split || 0,
-      totalNet: profitResult.values?.[0]?.total_net || 0,
+      totalNet: stats.total_net || 0,
       ticketCount: stats.ticket_count || 0,
       cancelledCount: stats.cancelled_count || 0,
     };
@@ -196,36 +193,30 @@ export const SalesRepository = {
       dayLabels.push(d.toLocaleDateString('es', { weekday: 'short' }).slice(0, 3));
     }
     const sevenDaysAgo = dates[0];
-    const [grossResult, netResult] = await Promise.all([
-      dbService.query(
-        `SELECT substr(created_at, 1, 10) as day, COALESCE(SUM(total), 0) as total
-        FROM sales
-        WHERE substr(created_at, 1, 10) >= ? AND (cancelled IS NULL OR cancelled = 0)
-        GROUP BY substr(created_at, 1, 10)`,
-        [sevenDaysAgo]
-      ),
-      dbService.query(
-        `SELECT substr(s.created_at, 1, 10) as day, COALESCE(SUM((si.unit_price - p.cost) * si.quantity), 0) as net
+    const result = await dbService.query(
+      `SELECT
+        substr(s.created_at, 1, 10) as day,
+        COALESCE(SUM(s.total), 0) as total,
+        COALESCE(SUM(si.profit), 0) as net
+      FROM sales s
+      LEFT JOIN (
+        SELECT si.sale_id, SUM((si.unit_price - p.cost) * si.quantity) as profit
         FROM sale_items si
         JOIN products p ON si.product_id = p.id
-        JOIN sales s ON si.sale_id = s.id
-        WHERE substr(s.created_at, 1, 10) >= ? AND (s.cancelled IS NULL OR s.cancelled = 0)
-        GROUP BY substr(s.created_at, 1, 10)`,
-        [sevenDaysAgo]
-      ),
-    ]);
+        GROUP BY si.sale_id
+      ) si ON si.sale_id = s.id
+      WHERE substr(s.created_at, 1, 10) >= ? AND (s.cancelled IS NULL OR s.cancelled = 0)
+      GROUP BY substr(s.created_at, 1, 10)`,
+      [sevenDaysAgo]
+    );
     const totalsByDay: Record<string, { total: number; net: number }> = {};
-    for (const row of (grossResult.values || [])) {
-      if (!totalsByDay[row.day]) totalsByDay[row.day] = { total: 0, net: 0 };
-      totalsByDay[row.day].total = row.total;
+    for (const row of (result.values || [])) {
+      totalsByDay[row.day] = { total: row.total || 0, net: row.net || 0 };
     }
-    for (const row of (netResult.values || [])) {
-      if (!totalsByDay[row.day]) totalsByDay[row.day] = { total: 0, net: 0 };
-      totalsByDay[row.day].net = row.net;
-    }
-    return dates.map((dateStr, i) => {
-      const d = totalsByDay[dateStr] || { total: 0, net: 0 };
-      return { day: dayLabels[i], total: d.total, net: d.net };
-    });
+    return dates.map((dateStr, i) => ({
+      day: dayLabels[i],
+      total: totalsByDay[dateStr]?.total || 0,
+      net: totalsByDay[dateStr]?.net || 0,
+    }));
   },
 };

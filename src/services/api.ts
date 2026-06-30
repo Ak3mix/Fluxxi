@@ -123,11 +123,11 @@ export const api = {
     return SettingsRepository.deleteProfilePhoto();
   },
 
-  async getDashboardData(): Promise<DashboardData> {
+  async getDashboardData(lowStockThreshold: number = 5): Promise<DashboardData> {
     const [todayStats, topProducts, lowStockCount, recentSales, weeklySales] = await Promise.all([
       SalesRepository.getTodayStats(),
       SalesRepository.getTopProducts(5),
-      SalesRepository.getLowStockCount(parseInt(await SettingsRepository.get('low_stock_threshold') || '5', 10)),
+      SalesRepository.getLowStockCount(lowStockThreshold),
       SalesRepository.getRecentSales(5),
       SalesRepository.getWeeklySales(),
     ]);
