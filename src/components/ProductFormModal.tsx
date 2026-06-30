@@ -8,7 +8,6 @@ import type { Product } from '../types';
 
 export interface ProductFormData {
   name: string;
-  code?: string;
   price: number;
   cost: number;
   stock: number;
@@ -27,7 +26,6 @@ interface Props {
 export function ProductFormModal({ isOpen, initialData, isSaving = false, onSave, onClose }: Props) {
   const { addToast } = useToast();
   const [name, setName] = useState('');
-  const [code, setCode] = useState('');
   const [price, setPrice] = useState('');
   const [cost, setCost] = useState('');
   const [stock, setStock] = useState('');
@@ -38,7 +36,6 @@ export function ProductFormModal({ isOpen, initialData, isSaving = false, onSave
   useEffect(() => {
     if (initialData) {
       setName(initialData.name);
-      setCode(initialData.code || '');
       setPrice(initialData.price.toString());
       setCost((initialData.cost || 0).toString());
       setStock(initialData.stock.toString());
@@ -46,7 +43,6 @@ export function ProductFormModal({ isOpen, initialData, isSaving = false, onSave
       setImage(initialData.image || null);
     } else {
       setName('');
-      setCode('');
       setPrice('');
       setCost('');
       setStock('');
@@ -87,7 +83,6 @@ export function ProductFormModal({ isOpen, initialData, isSaving = false, onSave
 
     await onSave({
       name: name.trim(),
-      code: code.trim() || undefined,
       price: priceNum,
       cost: costNum,
       stock: stockNum,
@@ -115,15 +110,6 @@ export function ProductFormModal({ isOpen, initialData, isSaving = false, onSave
               className="w-full bg-stone-50 border-none rounded-xl p-3 font-bold"
             />
             {errors.name && <p id="product-name-error" className="text-xs text-rose-500 mt-1">{errors.name}</p>}
-          </div>
-          <div>
-            <label className="text-[10px] uppercase font-bold text-stone-500 mb-1 block">Código de barras</label>
-            <input
-              value={code}
-              onChange={e => setCode(e.target.value)}
-              placeholder="Opcional"
-              className="w-full bg-stone-50 border-none rounded-xl p-3 font-mono"
-            />
           </div>
           <div>
             <label className="text-[10px] uppercase font-bold text-stone-500 mb-1 block">Categoría</label>

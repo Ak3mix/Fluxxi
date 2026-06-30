@@ -173,13 +173,6 @@ export const SalesRepository = {
     return result.values?.[0]?.count || 0;
   },
 
-  async getProductsWithoutCodeCount() {
-    const result = await dbService.query(
-      "SELECT COUNT(*) as count FROM products WHERE (code IS NULL OR code = '') AND (deleted IS NULL OR deleted = 0)"
-    );
-    return result.values?.[0]?.count || 0;
-  },
-
   async getRecentSales(limit: number = 5) {
     const result = await dbService.query(
       `SELECT id, total, payment_method, created_at

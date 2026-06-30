@@ -8,7 +8,6 @@ export interface Card {
 
 export interface Product {
   id: number;
-  code?: string;
   name: string;
   price: number;
   cost: number;
@@ -67,7 +66,6 @@ export interface Session {
 
 export interface ProductInput {
   name: string;
-  code?: string;
   price: number;
   cost?: number;
   stock: number;
@@ -122,7 +120,6 @@ export interface DashboardData {
   todayStats: TodayStats;
   topProducts: { name: string; quantity: number; total: number }[];
   lowStockCount: number;
-  productsWithoutCode: number;
   recentSales: { id: number; total: number; payment_method: string; created_at: string }[];
   weeklySales: { day: string; total: number }[];
 }

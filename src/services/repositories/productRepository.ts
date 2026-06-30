@@ -34,28 +34,18 @@ export const ProductRepository = {
     return products;
   },
 
-  async findByCode(code: string) {
-    const result = await dbService.query('SELECT * FROM products WHERE code = ? AND deleted = 0 LIMIT 1', [code]);
-    if (result.values && result.values.length > 0) {
-      const p = result.values[0];
-      p.image = await resolveImagePath(p.image_path);
-      return p;
-    }
-    return null;
-  },
-
   async add(product: ProductInput) {
     const result = await dbService.run(
-      'INSERT INTO products (name, code, price, cost, stock, initial_stock, category, image_path, deleted) VALUES (?, ?, ?, ?, ?, ?, ?, ?, 0)',
-      [product.name, product.code, product.price, product.cost, product.stock, product.initial_stock, product.category, product.image]
+      'INSERT INTO products (name, price, cost, stock, initial_stock, category, image_path, deleted) VALUES (?, ?, ?, ?, ?, ?, ?, 0)',
+      [product.name, product.price, product.cost, product.stock, product.initial_stock, product.category, product.image]
     );
     return { ...product, id: result.changes?.lastId };
   },
 
   async update(id: number, product: ProductInput) {
     await dbService.run(
-      'UPDATE products SET name = ?, code = ?, price = ?, cost = ?, stock = ?, category = ?, image_path = ? WHERE id = ?',
-      [product.name, product.code, product.price, product.cost, product.stock, product.category, product.image, id]
+      'UPDATE products SET name = ?, price = ?, cost = ?, stock = ?, category = ?, image_path = ? WHERE id = ?',
+      [product.name, product.price, product.cost, product.stock, product.category, product.image, id]
     );
     return { success: true };
   },

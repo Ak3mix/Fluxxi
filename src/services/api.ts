@@ -11,10 +11,6 @@ export const api = {
     return ProductRepository.getAll();
   },
 
-  async getProductByCode(code: string) {
-    return ProductRepository.findByCode(code);
-  },
-
   async addProduct(product: ProductInput) {
     return ProductRepository.add(product);
   },
@@ -128,14 +124,13 @@ export const api = {
   },
 
   async getDashboardData(): Promise<DashboardData> {
-    const [todayStats, topProducts, lowStockCount, productsWithoutCode, recentSales, weeklySales] = await Promise.all([
+    const [todayStats, topProducts, lowStockCount, recentSales, weeklySales] = await Promise.all([
       SalesRepository.getTodayStats(),
       SalesRepository.getTopProducts(5),
       SalesRepository.getLowStockCount(parseInt(await SettingsRepository.get('low_stock_threshold') || '5', 10)),
-      SalesRepository.getProductsWithoutCodeCount(),
       SalesRepository.getRecentSales(5),
       SalesRepository.getWeeklySales(),
     ]);
-    return { todayStats, topProducts, lowStockCount, productsWithoutCode, recentSales, weeklySales };
+    return { todayStats, topProducts, lowStockCount, recentSales, weeklySales };
   },
 };

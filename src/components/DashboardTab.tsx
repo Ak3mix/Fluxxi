@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { TrendingUp, TrendingDown, DollarSign, ShoppingBag, AlertTriangle, Hash, Clock, Package } from 'lucide-react';
+import { TrendingUp, TrendingDown, DollarSign, ShoppingBag, AlertTriangle, Hash, Clock } from 'lucide-react';
 import { motion } from 'motion/react';
 import { api } from '../services/api';
 import { formatCurrency } from '../utils/formatCurrency';
@@ -38,7 +38,7 @@ export function DashboardTab() {
 
   if (!data) return null;
 
-  const { todayStats, topProducts, lowStockCount, productsWithoutCode, recentSales, weeklySales } = data;
+  const { todayStats, topProducts, lowStockCount, recentSales, weeklySales } = data;
   const maxWeekly = Math.max(...weeklySales.map(w => w.total), 1);
 
   return (
@@ -61,7 +61,7 @@ export function DashboardTab() {
                 <span className="text-[10px] font-medium text-stone-500">{formatCurrency(w.total)}</span>
                 <div
                   className="w-full bg-emerald-500 rounded-t-md transition-all"
-                  style={{ height: `${Math.max((w.total / maxWeekly) * 100, w.total > 0 ? 8 : 2)}%` }}
+                  style={{ height: Math.max((w.total / maxWeekly) * 100, w.total > 0 ? 4 : 1) + 'px' }}
                 />
                 <span className="text-[10px] font-medium text-stone-500 uppercase">{w.day}</span>
               </div>
@@ -90,22 +90,14 @@ export function DashboardTab() {
         </div>
       )}
 
-      {(lowStockCount > 0 || productsWithoutCode > 0) && (
+      {lowStockCount > 0 && (
         <div className="bg-white rounded-2xl p-4 shadow-sm">
           <h3 className="text-sm font-semibold text-stone-500 uppercase tracking-wider mb-3">Alertas</h3>
           <div className="space-y-2">
-            {lowStockCount > 0 && (
-              <div className="flex items-center gap-2 text-amber-700">
-                <AlertTriangle size={16} />
-                <span className="text-sm">{lowStockCount} producto{lowStockCount !== 1 ? 's' : ''} con stock bajo</span>
-              </div>
-            )}
-            {productsWithoutCode > 0 && (
-              <div className="flex items-center gap-2 text-stone-600">
-                <Package size={16} />
-                <span className="text-sm">{productsWithoutCode} producto{productsWithoutCode !== 1 ? 's' : ''} sin código</span>
-              </div>
-            )}
+            <div className="flex items-center gap-2 text-amber-700">
+              <AlertTriangle size={16} />
+              <span className="text-sm">{lowStockCount} producto{lowStockCount !== 1 ? 's' : ''} con stock bajo</span>
+            </div>
           </div>
         </div>
       )}
