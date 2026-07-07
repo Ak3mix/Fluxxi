@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { XCircle, FileSpreadsheet, Edit, Trash2 } from 'lucide-react';
+import { XCircle, ChevronDown, FileSpreadsheet, Edit, Trash2 } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { format } from 'date-fns';
 import { api } from '../services/api';
@@ -9,7 +9,9 @@ import { Skeleton } from './Skeleton';
 import { formatCurrency } from '../utils/formatCurrency';
 import { Modal } from './Modal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
+import { groupSessionsByMonth } from '../utils/groupSessions';
 import type { Product, Sale, Session, Movement, Card } from '../types';
+import type { GroupedSessions } from '../utils/groupSessions';
 
 export function ReportsTab({
   products,
@@ -36,6 +38,7 @@ export function ReportsTab({
   const [deleteSessionId, setDeleteSessionId] = useState<number | null>(null);
   const [cancelSaleId, setCancelSaleId] = useState<number | null>(null);
   const [isDeletingSession, setIsDeletingSession] = useState(false);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   const fetchReport = async () => {
     try {
@@ -63,6 +66,16 @@ export function ReportsTab({
     };
     load();
   }, []);
+
+  useEffect(() => {
+    const closed = history.filter(s => s.is_closed);
+    if (closed.length > 0) {
+      const groups = groupSessionsByMonth(closed);
+      if (groups.length > 0) {
+        setExpandedGroups(new Set([groups[0].key]));
+      }
+    }
+  }, [history]);
 
   const handleEditSession = (session: Session) => {
     setEditSession(session);
@@ -365,52 +378,56 @@ export function ReportsTab({
                 </div>
               </div>
             ))
-          ) : history.length === 0 ? (
-            <div className="text-center py-8 text-stone-500 text-sm italic">Aún no hay jornadas cerradas</div>
-          ) : (
-            history.map(session => (
-              <div key={session.id} className="bg-white p-4 rounded-2xl border border-stone-200 flex items-center justify-between">
-                <div className="min-w-0 flex-1">
-                  <div className="font-bold text-stone-800 truncate">{session.name || `Jornada #${session.id}`}</div>
-                  <div className="text-[10px] text-stone-500">
-                    Cerrada: {session.end_time ? format(new Date(session.end_time), 'dd/MM/yyyy HH:mm') : 'N/A'}
-                  </div>
+          ) : (() => {
+            const closed = history.filter(s => s.is_closed);
+            const grouped = groupSessionsByMonth(closed);
+            if (grouped.length === 0) {
+              return <div className="text-center py-8 text-stone-500 text-sm italic">Aún no hay jornadas cerradas</div>;
+            }
+            return grouped.map(group => {
+              const isExpanded = expandedGroups.has(group.key);
+              return (
+                <div key={group.key} className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
+                  <button
+                    onClick={() => {
+                      setExpandedGroups(prev => {
+                        const next = new Set(prev);
+                        if (next.has(group.key)) next.delete(group.key);
+                        else next.add(group.key);
+                        return next;
+                      });
+                    }}
+                    className="flex items-center justify-between w-full p-4 text-left min-h-[44px] active:bg-stone-50 transition-colors"
+                  >
+                    <span className="font-bold text-stone-700 text-sm">{group.label}</span>
+                    <div className="flex items-center gap-2">
+                      <span className="text-[10px] font-bold text-stone-400">{group.sessions.length} jornadas</span>
+                      <ChevronDown size={16} className={cn("text-stone-400 transition-transform", isExpanded && "rotate-180")} />
+                    </div>
+                  </button>
+                  {isExpanded && (
+                    <div className="border-t border-stone-100">
+                      {group.sessions.map(session => (
+                        <div key={session.id} className="flex items-center justify-between px-4 py-3 border-b border-stone-50 last:border-0">
+                          <div className="min-w-0 flex-1">
+                            <div className="font-bold text-stone-800 truncate text-sm">{session.name || `Jornada #${session.id}`}</div>
+                            <div className="text-[10px] text-stone-500">
+                              {session.end_time ? format(new Date(session.end_time), 'dd/MM/yyyy HH:mm') : ''}
+                            </div>
+                          </div>
+                          <div className="flex gap-1 shrink-0">
+                            <button onClick={() => handleEditSession(session)} className="text-stone-500 p-2.5 bg-stone-100 rounded-xl active:scale-90 transition-transform" title="Editar nombre" aria-label={`Editar nombre de ${session.name || 'jornada'}`}><Edit size={16} /></button>
+                            <button onClick={() => setDeleteSessionId(session.id)} className="text-rose-500 p-2.5 bg-rose-50 rounded-xl active:scale-90 transition-transform" title="Eliminar jornada" aria-label={`Eliminar ${session.name || 'jornada'}`}><Trash2 size={16} /></button>
+                            <button onClick={() => handleExportExcel(session.id, format(new Date(session.end_time || ''), 'yyyy-MM-dd'), session.name)} className="text-emerald-600 p-2.5 bg-emerald-50 rounded-xl active:scale-90 transition-transform" title="Exportar Excel" aria-label={`Exportar Excel de ${session.name || 'jornada'}`}><FileSpreadsheet size={16} /></button>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </div>
-                <div className="flex gap-1 shrink-0">
-                  <button
-                    onClick={() => handleEditSession(session)}
-                    className="text-stone-500 p-3 bg-stone-100 rounded-xl active:scale-90 transition-transform"
-                    title="Editar nombre"
-                    aria-label={`Editar nombre de ${session.name || 'jornada'}`}
-                  >
-                    <Edit size={18} />
-                  </button>
-                  <button
-                    onClick={() => setDeleteSessionId(session.id)}
-                    className="text-rose-500 p-3 bg-rose-50 rounded-xl active:scale-90 transition-transform"
-                    title="Eliminar jornada"
-                    aria-label={`Eliminar ${session.name || 'jornada'}`}
-                  >
-                    <Trash2 size={18} />
-                  </button>
-                  <button
-                    onClick={() =>
-                      handleExportExcel(
-                        session.id,
-                        format(new Date(session.end_time || ''), 'yyyy-MM-dd'),
-                        session.name
-                      )
-                    }
-                    className="text-emerald-600 p-3 bg-emerald-50 rounded-xl active:scale-90 transition-transform"
-                    title="Exportar Excel"
-                    aria-label={`Exportar Excel de ${session.name || 'jornada'}`}
-                  >
-                    <FileSpreadsheet size={18} />
-                  </button>
-                </div>
-              </div>
-            ))
-          )}
+              );
+            });
+          })()}
         </div>
       </div>
     </div>

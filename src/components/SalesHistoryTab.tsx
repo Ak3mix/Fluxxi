@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { ChevronLeft, XCircle, Clock, FileSpreadsheet } from 'lucide-react';
+import { ChevronLeft, ChevronDown, XCircle, Clock, FileSpreadsheet } from 'lucide-react';
 import { format } from 'date-fns';
 import { api } from '../services/api';
 import { exportSessionExcel } from '../services/excelExportService';
@@ -8,7 +8,9 @@ import { Skeleton } from './Skeleton';
 import { Modal } from './Modal';
 import { cn } from '../utils/cn';
 import { formatCurrency } from '../utils/formatCurrency';
+import { groupSessionsByMonth } from '../utils/groupSessions';
 import type { Sale, Session, Card, Product } from '../types';
+import type { GroupedSessions } from '../utils/groupSessions';
 
 interface Props {
   products: Product[];
@@ -24,6 +26,7 @@ export function SalesHistoryTab({ products, businessName = 'VentasPro', currency
   const [selectedSession, setSelectedSession] = useState<Session | null>(null);
   const [selectedSales, setSelectedSales] = useState<Sale[]>([]);
   const [cancelSaleId, setCancelSaleId] = useState<number | null>(null);
+  const [expandedGroups, setExpandedGroups] = useState<Set<string>>(new Set());
 
   useEffect(() => {
     const load = async () => {
@@ -36,6 +39,13 @@ export function SalesHistoryTab({ products, businessName = 'VentasPro', currency
         setActiveSessionSales(current.sales.filter((s: Sale) => !s.cancelled));
         const allSessions = [currentSession, ...history.filter((s: Session) => s.id !== currentSession.id)];
         setSessions(allSessions);
+        const closedSessions = history.filter((s: Session) => s.is_closed);
+        if (closedSessions.length > 0) {
+          const groups = groupSessionsByMonth(closedSessions);
+          if (groups.length > 0) {
+            setExpandedGroups(new Set([groups[0].key]));
+          }
+        }
       } catch (e) {
         console.error('Error loading sales history', e);
       } finally {
@@ -178,53 +188,108 @@ export function SalesHistoryTab({ products, businessName = 'VentasPro', currency
     );
   }
 
+  const activeSession = sessions.find(isActiveSession);
+  const closedSessions = sessions.filter(s => !isActiveSession(s));
+  const grouped = groupSessionsByMonth(closedSessions);
+
+  const toggleGroup = (key: string) => {
+    setExpandedGroups(prev => {
+      const next = new Set(prev);
+      if (next.has(key)) {
+        next.delete(key);
+      } else {
+        next.add(key);
+      }
+      return next;
+    });
+  };
+
   return (
     <div>
       <h2 className="text-lg font-black mb-4">Historial de Ventas</h2>
       <p className="text-xs text-stone-500 mb-6">Selecciona una jornada para ver sus ventas</p>
 
       <div className="space-y-3">
-        {sessions.map(session => {
-          const active = isActiveSession(session);
+        {activeSession && (
+          <div className="rounded-2xl border p-4 bg-emerald-50 border-emerald-200">
+            <div className="flex items-center justify-between">
+              <button
+                onClick={() => handleSelectSession(activeSession)}
+                className="flex-1 text-left min-h-[44px]"
+              >
+                <div className="flex items-center gap-2">
+                  <span className="font-bold text-emerald-900">
+                    {activeSession.name || `Jornada #${activeSession.id}`}
+                  </span>
+                  <span className="text-[9px] font-black uppercase bg-emerald-200 text-emerald-800 px-1.5 py-0.5 rounded-full">Activa</span>
+                </div>
+                <div className="text-[10px] mt-0.5 text-emerald-600">Jornada en curso</div>
+              </button>
+              <button
+                onClick={() => handleExportExcel(activeSession)}
+                className="text-emerald-700 bg-emerald-100 rounded-xl active:scale-90 transition-transform min-w-[44px] min-h-[44px] flex items-center justify-center shrink-0"
+                aria-label={`Exportar Excel de ${activeSession.name || 'jornada'}`}
+              >
+                <FileSpreadsheet size={18} />
+              </button>
+            </div>
+          </div>
+        )}
+
+        {grouped.map(group => {
+          const isExpanded = expandedGroups.has(group.key);
           return (
-            <div
-              key={session.id}
-              className={cn(
-                "rounded-2xl border p-4",
-                active ? "bg-emerald-50 border-emerald-200" : "bg-white border-stone-200"
-              )}
-            >
-              <div className="flex items-center justify-between">
-                <button
-                  onClick={() => handleSelectSession(session)}
-                  className="flex-1 text-left min-h-[44px]"
-                >
-                  <div className="flex items-center gap-2">
-                    <span className={cn("font-bold", active ? "text-emerald-900" : "text-stone-800")}>
-                      {session.name || `Jornada #${session.id}`}
-                    </span>
-                    {active && (
-                      <span className="text-[9px] font-black uppercase bg-emerald-200 text-emerald-800 px-1.5 py-0.5 rounded-full">Activa</span>
+            <div key={group.key} className="bg-white rounded-2xl border border-stone-200 overflow-hidden">
+              <button
+                onClick={() => toggleGroup(group.key)}
+                className="flex items-center justify-between w-full p-4 text-left min-h-[44px] active:bg-stone-50 transition-colors"
+              >
+                <span className="font-bold text-stone-700 text-sm">{group.label}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-[10px] font-bold text-stone-400">{group.sessions.length} jornadas</span>
+                  <ChevronDown
+                    size={16}
+                    className={cn(
+                      "text-stone-400 transition-transform",
+                      isExpanded && "rotate-180"
                     )}
-                  </div>
-                  <div className={cn("text-[10px] mt-0.5", active ? "text-emerald-600" : "text-stone-500")}>
-                    {active ? 'Jornada en curso' : `Cerrada: ${session.end_time ? format(new Date(session.end_time), 'dd/MM/yyyy HH:mm') : 'N/A'}`}
-                  </div>
-                </button>
-                <button
-                  onClick={() => handleExportExcel(session)}
-                  className={cn(
-                    "rounded-xl active:scale-90 transition-transform min-w-[44px] min-h-[44px] flex items-center justify-center shrink-0",
-                    active ? "text-emerald-700 bg-emerald-100" : "text-emerald-600 bg-emerald-50"
-                  )}
-                  aria-label={`Exportar Excel de ${session.name || 'jornada'}`}
-                >
-                  <FileSpreadsheet size={18} />
-                </button>
-              </div>
+                  />
+                </div>
+              </button>
+              {isExpanded && (
+                <div className="border-t border-stone-100">
+                  {group.sessions.map(session => (
+                    <div
+                      key={session.id}
+                      className="flex items-center justify-between px-4 py-3 border-b border-stone-50 last:border-0 active:bg-stone-50 transition-colors"
+                    >
+                      <button
+                        onClick={() => handleSelectSession(session)}
+                        className="flex-1 text-left min-h-[44px]"
+                      >
+                        <div className="text-sm font-bold text-stone-800">{session.name || `Jornada #${session.id}`}</div>
+                        <div className="text-[10px] text-stone-500">
+                          {session.end_time ? format(new Date(session.end_time), 'dd/MM/yyyy HH:mm') : ''}
+                        </div>
+                      </button>
+                      <button
+                        onClick={() => handleExportExcel(session)}
+                        className="text-emerald-600 p-3 bg-emerald-50 rounded-xl active:scale-90 transition-transform min-w-[44px] min-h-[44px] flex items-center justify-center shrink-0"
+                        aria-label={`Exportar Excel de ${session.name || 'jornada'}`}
+                      >
+                        <FileSpreadsheet size={18} />
+                      </button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}
+
+        {grouped.length === 0 && !activeSession && (
+          <div className="text-center py-12 text-stone-400 text-sm">No hay jornadas registradas</div>
+        )}
       </div>
     </div>
   );
