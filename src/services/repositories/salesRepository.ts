@@ -116,6 +116,33 @@ export const SalesRepository = {
     return result.values || [];
   },
 
+  async getPreviousDayStats() {
+    const yesterday = new Date();
+    yesterday.setDate(yesterday.getDate() - 1);
+    const dateStr = yesterday.toISOString().slice(0, 10);
+    const result = await dbService.query(
+      `SELECT
+        COALESCE(SUM(s.total), 0) as total_sales,
+        COALESCE(SUM(si.profit), 0) as total_net,
+        COUNT(*) as ticket_count
+      FROM sales s
+      LEFT JOIN (
+        SELECT si.sale_id, SUM((si.unit_price - p.cost) * si.quantity) as profit
+        FROM sale_items si
+        JOIN products p ON si.product_id = p.id
+        GROUP BY si.sale_id
+      ) si ON si.sale_id = s.id
+      WHERE substr(s.created_at, 1, 10) = ? AND (s.cancelled IS NULL OR s.cancelled = 0)`,
+      [dateStr]
+    );
+    const row = result.values?.[0] || {};
+    return {
+      totalSales: row.total_sales || 0,
+      totalNet: row.total_net || 0,
+      ticketCount: row.ticket_count || 0,
+    };
+  },
+
   async getTodayStats() {
     const today = new Date().toISOString().slice(0, 10);
     const result = await dbService.query(

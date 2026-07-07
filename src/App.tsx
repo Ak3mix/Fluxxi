@@ -1,10 +1,9 @@
-import React, { useState, useEffect, useCallback, useRef } from 'react';
-import { LayoutDashboard, ShoppingCart, Package, ClipboardList, Settings } from 'lucide-react';
+import React, { useState, useEffect, useRef } from 'react';
+import { LayoutDashboard, List, ShoppingCart, Package, MoreHorizontal, Settings, FileSpreadsheet, Clock, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { api } from './services/api';
 import { dbService } from './services/database';
 import { MigrationService } from './services/migration';
-import { cn } from './utils/cn';
 import { formatCurrency, setCurrencySymbol } from './utils/formatCurrency';
 import { usePersistedCart } from './hooks/usePersistedCart';
 import { useToast } from './contexts/ToastContext';
@@ -14,7 +13,8 @@ import { InventoryTab } from './components/InventoryTab';
 import { ReportsTab } from './components/ReportsTab';
 import { DashboardTab } from './components/DashboardTab';
 import { VenderGrid } from './components/VenderGrid';
-import { CartModal } from './components/CartModal';
+import { CartTab } from './components/CartTab';
+import { SalesHistoryTab } from './components/SalesHistoryTab';
 import { PaymentModal } from './components/PaymentModal';
 import { SettingsModal } from './components/SettingsModal';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
@@ -24,20 +24,21 @@ import type { SettingsMap } from './services/settingsRepository';
 
 const tabLabels: Record<string, string> = {
   dashboard: 'Dashboard',
-  vender: 'Vender',
+  catalogo: 'Catálogo',
+  carrito: 'Carrito',
   inventario: 'Inventario',
-  reportes: 'Cierre',
+  mas: 'Más',
 };
 
 export default function App() {
   const { addToast } = useToast();
-  const [activeTab, setActiveTab] = useState<'dashboard' | 'vender' | 'inventario' | 'reportes'>('dashboard');
+  const [activeTab, setActiveTab] = useState<'dashboard' | 'catalogo' | 'carrito' | 'inventario' | 'mas'>('dashboard');
+  const [masSection, setMasSection] = useState<'menu' | 'reportes' | 'historial'>('menu');
   const [products, setProducts] = useState<Product[]>([]);
   const { cart, addToCart, removeFromCart, updateCartQuantity, clearCart, cartTotal, cartQuantity } = usePersistedCart();
   const [isLoading, setIsLoading] = useState(true);
   const [loading, setLoading] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
-  const [showCartModal, setShowCartModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'transfer' | 'split' | null>(null);
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
@@ -62,7 +63,6 @@ export default function App() {
   const [currentSession, setCurrentSession] = useState<Session | null>(null);
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
-  const [cartPulse, setCartPulse] = useState(false);
   const processingRef = useRef(false);
 
   const categories = ['all', ...Array.from(new Set(products.map(p => p.category).filter(Boolean)))] as string[];
@@ -117,8 +117,8 @@ export default function App() {
         setShowSettings(false);
       } else if (showPaymentModal) {
         setShowPaymentModal(false);
-      } else if (showCartModal) {
-        setShowCartModal(false);
+      } else if (activeTab === 'mas' && masSection !== 'menu') {
+        setMasSection('menu');
       } else if (activeTab !== 'dashboard') {
         setActiveTab('dashboard');
       } else {
@@ -126,13 +126,16 @@ export default function App() {
       }
     });
     return () => { promise.then(h => h.remove()); };
-  }, [showSettings, showPaymentModal, showCartModal, activeTab]);
+  }, [showSettings, showPaymentModal, activeTab, masSection]);
 
   const handleAddToCart = async (product: Product) => {
     addToCart(product);
-    setCartPulse(true);
     try { await Haptics.impact({ style: ImpactStyle.Medium }); } catch {}
-    setTimeout(() => setCartPulse(false), 600);
+  };
+
+  const handleMasSelect = (section: 'reportes' | 'historial') => {
+    setActiveTab('mas');
+    setMasSection(section);
   };
 
   const initializeSplitPayments = (method: 'cash' | 'transfer' | 'split') => {
@@ -232,6 +235,188 @@ export default function App() {
   const lowStockThreshold = parseInt(settings.low_stock_threshold || '5', 10);
   const defaultPaymentMethod = (settings.default_payment_method || 'cash') as 'cash' | 'transfer' | 'split';
 
+  const renderTabContent = () => {
+    switch (activeTab) {
+      case 'dashboard':
+        return (
+          <motion.div
+            key="dashboard"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <ErrorBoundary label="Dashboard">
+              <DashboardTab lowStockThreshold={lowStockThreshold} appLoading={isLoading} />
+            </ErrorBoundary>
+          </motion.div>
+        );
+      case 'catalogo':
+        return (
+          <motion.div
+            key="catalogo"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <ErrorBoundary label="Catálogo">
+              <VenderGrid
+                products={products}
+                loading={isLoading}
+                searchQuery={searchQuery}
+                selectedCategory={selectedCategory}
+                categories={categories}
+                onSearchChange={setSearchQuery}
+                onCategoryChange={setSelectedCategory}
+                onAddToCart={handleAddToCart}
+                lowStockThreshold={lowStockThreshold}
+              />
+            </ErrorBoundary>
+          </motion.div>
+        );
+      case 'carrito':
+        return (
+          <motion.div
+            key="carrito"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            className="flex flex-col h-full"
+          >
+            <ErrorBoundary label="Carrito">
+              <h2 className="text-lg font-bold text-stone-800 mb-4">Tu Carrito</h2>
+              <CartTab
+                cart={cart}
+                cartTotal={cartTotal}
+                onRemove={removeFromCart}
+                onUpdateQuantity={updateCartQuantity}
+                onProceedToPayment={() => setShowPaymentModal(true)}
+              />
+            </ErrorBoundary>
+          </motion.div>
+        );
+      case 'inventario':
+        return (
+          <motion.div
+            key="inventario"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <ErrorBoundary label="Inventario">
+              <InventoryTab products={products} loading={isLoading} onUpdate={fetchProducts} lowStockThreshold={lowStockThreshold} />
+            </ErrorBoundary>
+          </motion.div>
+        );
+      case 'mas':
+        if (masSection === 'reportes') {
+          return (
+            <motion.div
+              key="mas-reportes"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
+              <ErrorBoundary label="Reportes">
+                <div className="flex items-center gap-3 mb-6">
+                  <button
+                    onClick={() => setMasSection('menu')}
+                    className="p-2 -ml-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                    aria-label="Volver"
+                  >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                  </button>
+                  <h2 className="text-lg font-black">Reportes</h2>
+                </div>
+                <ReportsTab
+                  products={products}
+                  onSessionClose={() => { fetchSession(); fetchProducts(); }}
+                  onProductsChange={fetchProducts}
+                  businessName={businessName}
+                  currencySymbol={settings.currency_symbol || '$'}
+                />
+              </ErrorBoundary>
+            </motion.div>
+          );
+        }
+        if (masSection === 'historial') {
+          return (
+            <motion.div
+              key="mas-historial"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
+              <ErrorBoundary label="Historial">
+                <div className="flex items-center gap-3 mb-6">
+                  <button
+                    onClick={() => setMasSection('menu')}
+                    className="p-2 -ml-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                    aria-label="Volver"
+                  >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                  </button>
+                  <h2 className="text-lg font-black">Historial</h2>
+                </div>
+                <SalesHistoryTab
+                  products={products}
+                  businessName={businessName}
+                  currencySymbol={settings.currency_symbol || '$'}
+                />
+              </ErrorBoundary>
+            </motion.div>
+          );
+        }
+        return (
+          <motion.div
+            key="mas-menu"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+          >
+            <h2 className="text-lg font-black mb-6">Más</h2>
+            <div className="space-y-3">
+              <button
+                onClick={() => handleMasSelect('reportes')}
+                className="flex items-center gap-4 w-full p-4 bg-white rounded-2xl border border-stone-200 text-left active:scale-95 transition-transform min-h-[56px]"
+              >
+                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                  <FileSpreadsheet size={20} />
+                </div>
+                <div>
+                  <div className="font-bold text-stone-800">Reportes</div>
+                  <div className="text-[11px] text-stone-500">Cierre de jornada e historial</div>
+                </div>
+              </button>
+              <button
+                onClick={() => handleMasSelect('historial')}
+                className="flex items-center gap-4 w-full p-4 bg-white rounded-2xl border border-stone-200 text-left active:scale-95 transition-transform min-h-[56px]"
+              >
+                <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+                  <Clock size={20} />
+                </div>
+                <div>
+                  <div className="font-bold text-stone-800">Historial de ventas</div>
+                  <div className="text-[11px] text-stone-500">Ventas agrupadas por jornada</div>
+                </div>
+              </button>
+              <button
+                onClick={() => setShowSettings(true)}
+                className="flex items-center gap-4 w-full p-4 bg-white rounded-2xl border border-stone-200 text-left active:scale-95 transition-transform min-h-[56px]"
+              >
+                <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center shrink-0">
+                  <User size={20} />
+                </div>
+                <div>
+                  <div className="font-bold text-stone-800">Perfil y ajustes</div>
+                  <div className="text-[11px] text-stone-500">Configuración del negocio</div>
+                </div>
+              </button>
+            </div>
+          </motion.div>
+        );
+    }
+  };
+
   return (
     <div className="min-h-screen min-h-[100dvh] bg-stone-100 font-sans text-stone-900 pb-safe">
       <header className="bg-white border-b border-stone-200 p-4 pt-safe sticky top-0 z-30 shadow-sm">
@@ -248,10 +433,7 @@ export default function App() {
             <Settings size={16} className="text-stone-400 shrink-0 -ml-1" />
           </button>
           <div className="flex items-center gap-2">
-            <div className={cn(
-              "w-3 h-3 rounded-full",
-              "bg-emerald-500"
-            )} />
+            <div className="w-3 h-3 rounded-full bg-emerald-500" />
             <span className="text-xs font-medium uppercase tracking-widest text-stone-500">
               {tabLabels[activeTab]}
             </span>
@@ -261,116 +443,17 @@ export default function App() {
 
       <main className="w-full max-w-md md:max-w-3xl lg:max-w-5xl mx-auto p-4 pb-24">
         <AnimatePresence mode="wait">
-          {activeTab === 'dashboard' && (
-            <motion.div
-              key="dashboard"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-            >
-              <ErrorBoundary label="Dashboard">
-                <DashboardTab lowStockThreshold={lowStockThreshold} appLoading={isLoading} />
-              </ErrorBoundary>
-            </motion.div>
-          )}
-
-          {activeTab === 'vender' && (
-            <motion.div
-              key="vender"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-            >
-              <ErrorBoundary label="Vender">
-                <VenderGrid
-                  products={products}
-                  loading={isLoading}
-                  searchQuery={searchQuery}
-                  selectedCategory={selectedCategory}
-                  categories={categories}
-                  onSearchChange={setSearchQuery}
-                  onCategoryChange={setSelectedCategory}
-                  onAddToCart={handleAddToCart}
-                  lowStockThreshold={lowStockThreshold}
-
-                />
-              </ErrorBoundary>
-            </motion.div>
-          )}
-
-          {activeTab === 'inventario' && (
-            <motion.div
-              key="inventario"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-            >
-              <ErrorBoundary label="Inventario">
-                <InventoryTab products={products} loading={isLoading} onUpdate={fetchProducts} lowStockThreshold={lowStockThreshold} />
-              </ErrorBoundary>
-            </motion.div>
-          )}
-
-          {activeTab === 'reportes' && (
-            <motion.div
-              key="reportes"
-              initial={{ opacity: 0, y: 10 }}
-              animate={{ opacity: 1, y: 0 }}
-              exit={{ opacity: 0, y: -10 }}
-            >
-              <ErrorBoundary label="Cierre">
-                <ReportsTab products={products} onSessionClose={() => { fetchSession(); fetchProducts(); }} onProductsChange={fetchProducts} businessName={businessName} currencySymbol={settings.currency_symbol || '$'} />
-              </ErrorBoundary>
-            </motion.div>
-          )}
+          {renderTabContent()}
         </AnimatePresence>
       </main>
 
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 p-2 pb-safe flex justify-around items-center z-40">
         <NavButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard size={20} />} label="Dashboard" ariaLabel="Ir a Dashboard" />
-        <NavButton active={activeTab === 'vender'} onClick={() => setActiveTab('vender')} icon={<ShoppingCart size={20} />} label="Vender" ariaLabel="Ir a Vender" />
+        <NavButton active={activeTab === 'catalogo'} onClick={() => setActiveTab('catalogo')} icon={<List size={20} />} label="Catálogo" ariaLabel="Ir a Catálogo" />
+        <NavButton active={activeTab === 'carrito'} onClick={() => setActiveTab('carrito')} icon={<ShoppingCart size={20} />} label="Carrito" ariaLabel="Ir a Carrito" badge={cartQuantity > 0 ? cartQuantity : undefined} />
         <NavButton active={activeTab === 'inventario'} onClick={() => setActiveTab('inventario')} icon={<Package size={20} />} label="Inventario" ariaLabel="Ir a Inventario" />
-        <NavButton active={activeTab === 'reportes'} onClick={() => setActiveTab('reportes')} icon={<ClipboardList size={20} />} label="Cierre" ariaLabel="Ir a Cierre" />
+        <NavButton active={activeTab === 'mas'} onClick={() => { setActiveTab('mas'); setMasSection('menu'); }} icon={<MoreHorizontal size={20} />} label="Más" ariaLabel="Más opciones" />
       </nav>
-
-      <AnimatePresence>
-        {activeTab === 'vender' && cart.length > 0 && (
-          <motion.div
-            initial={{ y: 100 }}
-            animate={{ y: 0 }}
-            exit={{ y: 100 }}
-            className="fixed bottom-[calc(64px+env(safe-area-inset-bottom))] left-0 right-0 p-4 z-30 pointer-events-none"
-          >
-            <div className="max-w-md md:max-w-3xl lg:max-w-5xl mx-auto pointer-events-auto">
-              <button
-                onClick={() => setShowCartModal(true)}
-                className={cn(
-                  "w-full p-4 rounded-2xl shadow-2xl flex justify-between items-center active:scale-95 transition-transform",
-                  cartPulse ? "bg-emerald-600 scale-105 text-white" : "bg-stone-900 text-white"
-                )}
-              >
-                <div className="flex items-center gap-3">
-                  <div className="bg-emerald-500 text-white w-6 h-6 rounded-full flex items-center justify-center text-[10px] font-black">
-                    {cartQuantity}
-                  </div>
-                  <span className="font-bold">Ver Carrito</span>
-                </div>
-                <div className="text-xl font-black">{formatCurrency(cartTotal)}</div>
-              </button>
-            </div>
-          </motion.div>
-        )}
-      </AnimatePresence>
-
-      <CartModal
-        show={showCartModal}
-        cart={cart}
-        cartTotal={cartTotal}
-        onClose={() => setShowCartModal(false)}
-        onRemove={removeFromCart}
-        onUpdateQuantity={updateCartQuantity}
-        onProceedToPayment={() => { setShowCartModal(false); setShowPaymentModal(true); }}
-      />
 
       <PaymentModal
         show={showPaymentModal}

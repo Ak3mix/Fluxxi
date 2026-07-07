@@ -18,6 +18,7 @@ import type { ProductFormData } from './ProductFormModal';
 import { CardFormModal } from './CardFormModal';
 import { DeleteConfirmModal } from './DeleteConfirmModal';
 import { MoveInventoryModal } from './MoveInventoryModal';
+import { Modal } from './Modal';
 import type { Product, Card } from '../types';
 
 export function InventoryTab({ products, loading = false, onUpdate, lowStockThreshold = 5 }: { products: Product[]; loading?: boolean; onUpdate: () => void; lowStockThreshold?: number }) {
@@ -38,6 +39,8 @@ export function InventoryTab({ products, loading = false, onUpdate, lowStockThre
     .filter(p => selectedCategory === 'all' || p.category === selectedCategory)
     .filter(p => debouncedSearch === '' || p.name.toLowerCase().includes(debouncedSearch.toLowerCase()))
     .sort((a, b) => a.name.localeCompare(b.name));
+
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
 
   const [cards, setCards] = useState<Card[]>([]);
   const [cardsLoading, setCardsLoading] = useState(true);
@@ -89,6 +92,7 @@ export function InventoryTab({ products, loading = false, onUpdate, lowStockThre
       if (editingProduct) {
         await api.updateProduct(editingProduct.id, data);
         setEditingProduct(null);
+        setShowAddProduct(false);
       } else {
         await api.addProduct(data);
         setShowAddProduct(false);
@@ -226,87 +230,63 @@ export function InventoryTab({ products, loading = false, onUpdate, lowStockThre
                 <p className="font-medium">No se encontraron productos</p>
               </div>
             ) : (
-              filteredProducts.map(product => (
-                <div
-                  key={product.id}
-                  className="bg-white p-4 rounded-2xl border border-stone-200 shadow-sm flex flex-col gap-4"
-                >
-                  <div className="flex items-start gap-4">
-                    {product.image ? (
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        className="w-20 h-20 object-contain rounded-xl shrink-0 bg-stone-100" loading="lazy"
-                      />
-                    ) : (
-                      <div className="w-20 h-20 bg-stone-100 rounded-xl shrink-0 flex items-center justify-center">
-                        <ImageIcon size={32} className="text-stone-300" />
-                      </div>
-                    )}
-                    <div className="flex-1 min-w-0">
-                      <div className="font-black text-stone-900 text-lg leading-tight truncate">{product.name}</div>
-                      <div className="text-xs text-stone-500 mt-1">
-                        {product.category && (
-                          <span className="inline-block bg-stone-100 px-2 py-0.5 rounded-full text-[10px] uppercase font-bold mr-2">
-                            {product.category}
-                          </span>
+              (() => {
+                const maxStock = Math.max(...filteredProducts.map(p => p.initial_stock || p.stock * 2), 1);
+                return filteredProducts.map(product => {
+                  const barPct = Math.min(100, ((product.stock ?? 0) / maxStock) * 100);
+                  const isLow = (product.stock ?? 0) <= lowStockThreshold;
+                  const isCritical = (product.stock ?? 0) <= 0;
+                  return (
+                    <button
+                      key={product.id}
+                      onClick={() => setSelectedProduct(product)}
+                      className="w-full bg-white px-4 py-3 border-b border-stone-100 text-left active:bg-stone-50 transition-colors"
+                    >
+                      <div className="flex items-center gap-3">
+                        {product.image ? (
+                          <img
+                            src={product.image}
+                            alt={product.name}
+                            className="w-11 h-11 object-contain rounded-lg shrink-0 bg-stone-100" loading="lazy"
+                          />
+                        ) : (
+                          <div className="w-11 h-11 bg-stone-100 rounded-lg shrink-0 flex items-center justify-center">
+                            <ImageIcon size={20} className="text-stone-300" />
+                          </div>
                         )}
-                        Stock:{' '}
-                        <span
-                          className={cn('font-bold', (product.stock ?? 0) <= lowStockThreshold ? 'text-rose-600' : 'text-stone-600')}
-                        >
-                          {product.stock}
-                        </span>
-                        {(product.stock ?? 0) <= lowStockThreshold && (
-                        <span className="ml-1 text-[10px] bg-rose-100 text-rose-700 font-black px-1.5 py-0.5 rounded-full uppercase">
-                          Stock Bajo
-                        </span>
-                        )}{' '}
-                        • Precio:{' '}
-                        <span className="font-bold text-emerald-600">{formatCurrency(product.price)}</span> • Costo:{' '}
-                        <span className="font-bold text-stone-500">{formatCurrency(product.cost || 0)}</span>
+                        <div className="flex-1 min-w-0">
+                          <div className="font-bold text-stone-900 text-sm leading-tight truncate flex items-center gap-2">
+                            {product.name}
+                            {isCritical && (
+                              <span className="text-[9px] bg-rose-100 text-rose-700 font-black px-1.5 py-0.5 rounded-full uppercase">Agotado</span>
+                            )}
+                            {!isCritical && isLow && (
+                              <span className="text-[9px] bg-amber-100 text-amber-700 font-black px-1.5 py-0.5 rounded-full uppercase">Stock Bajo</span>
+                            )}
+                          </div>
+                          <div className="text-[11px] text-stone-500 mt-0.5">
+                            {product.category && <span className="font-medium">{product.category}</span>}
+                            {product.category && <span className="mx-1">•</span>}
+                            {formatCurrency(product.price)}
+                            {(product.cost || 0) > 0 && <span className="text-stone-400"> • costo {formatCurrency(product.cost || 0)}</span>}
+                          </div>
+                        </div>
+                        <div className="text-right shrink-0">
+                          <div className={cn("text-base font-black leading-none", isCritical ? "text-rose-600" : isLow ? "text-amber-600" : "text-stone-900")}>
+                            {product.stock ?? 0}
+                          </div>
+                          <div className={cn("mt-1.5 w-16 h-1.5 rounded-full overflow-hidden", isCritical ? "bg-rose-100" : isLow ? "bg-amber-100" : "bg-stone-100")}>
+                            <div
+                              className={cn("h-full rounded-full transition-all", isCritical ? "bg-rose-400" : isLow ? "bg-amber-400" : "bg-emerald-500")}
+                              style={{ width: `${barPct}%` }}
+                            />
+                          </div>
+                        </div>
                       </div>
-                    </div>
-                  </div>
-                  <div className="flex gap-2 justify-end">
-                    <button
-                      onClick={() => setMovingProduct(product)}
-                      className="bg-blue-50 text-blue-600 p-3 rounded-xl hover:bg-blue-100 transition-colors flex-1 flex justify-center shrink-0"
-                      title="Reabastecer"
-                      aria-label={`Reabastecer ${product.name}`}
-                    >
-                      <ArrowUpCircle size={20} />
                     </button>
-                    <button
-                      onClick={() => setMovingProduct(product)}
-                      className="bg-rose-50 text-rose-600 p-3 rounded-xl hover:bg-rose-100 transition-colors flex-1 flex justify-center shrink-0"
-                      title="Merma"
-                      aria-label={`Registrar merma de ${product.name}`}
-                    >
-                      <ArrowDownCircle size={20} />
-                    </button>
-                    <button
-                      onClick={() => {
-                        setEditingProduct(product);
-                        setShowAddProduct(true);
-                      }}
-                      className="bg-stone-50 text-stone-600 p-3 rounded-xl hover:bg-stone-100 transition-colors flex-1 flex justify-center shrink-0"
-                      title="Editar"
-                      aria-label={`Editar ${product.name}`}
-                    >
-                      <Edit size={20} />
-                    </button>
-                    <button
-                      onClick={() => setDeletingProduct(product)}
-                      className="bg-stone-50 text-rose-400 p-3 rounded-xl hover:bg-rose-50 hover:text-rose-600 transition-colors flex-1 flex justify-center shrink-0"
-                      title="Eliminar"
-                      aria-label={`Eliminar ${product.name}`}
-                    >
-                      <Trash2 size={20} />
-                    </button>
-                  </div>
-                </div>
-              ))
+                  );
+                });
+              })()
             )}
           </div>
         </>
@@ -424,6 +404,83 @@ export function InventoryTab({ products, loading = false, onUpdate, lowStockThre
         onConfirm={handleMove}
         onClose={() => setMovingProduct(null)}
       />
+
+      <Modal
+        isOpen={!!selectedProduct}
+        onClose={() => setSelectedProduct(null)}
+        title={selectedProduct?.name || ''}
+        variant="bottom-sheet"
+      >
+        <div className="space-y-2 pb-4">
+          <button
+            onClick={() => {
+              const p = selectedProduct;
+              setSelectedProduct(null);
+              if (p) setMovingProduct(p);
+            }}
+            className="flex items-center gap-4 w-full p-4 text-left rounded-xl hover:bg-stone-50 active:scale-95 transition-all"
+          >
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+              <ArrowUpCircle size={20} />
+            </div>
+            <div>
+              <div className="font-bold text-stone-800 text-sm">Entrada (Reabastecer)</div>
+              <div className="text-[11px] text-stone-500">Aumentar el stock del producto</div>
+            </div>
+          </button>
+          <button
+            onClick={() => {
+              const p = selectedProduct;
+              setSelectedProduct(null);
+              if (p) setMovingProduct(p);
+            }}
+            className="flex items-center gap-4 w-full p-4 text-left rounded-xl hover:bg-stone-50 active:scale-95 transition-all"
+          >
+            <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+              <ArrowDownCircle size={20} />
+            </div>
+            <div>
+              <div className="font-bold text-stone-800 text-sm">Merma</div>
+              <div className="text-[11px] text-stone-500">Registrar pérdida o desperdicio</div>
+            </div>
+          </button>
+          <button
+            onClick={() => {
+              const p = selectedProduct;
+              setSelectedProduct(null);
+              if (p) {
+                setEditingProduct(p);
+                setShowAddProduct(true);
+              }
+            }}
+            className="flex items-center gap-4 w-full p-4 text-left rounded-xl hover:bg-stone-50 active:scale-95 transition-all"
+          >
+            <div className="w-10 h-10 rounded-xl bg-blue-50 text-blue-600 flex items-center justify-center shrink-0">
+              <Edit size={20} />
+            </div>
+            <div>
+              <div className="font-bold text-stone-800 text-sm">Editar</div>
+              <div className="text-[11px] text-stone-500">Modificar datos del producto</div>
+            </div>
+          </button>
+          <button
+            onClick={() => {
+              const p = selectedProduct;
+              setSelectedProduct(null);
+              if (p) setDeletingProduct(p);
+            }}
+            className="flex items-center gap-4 w-full p-4 text-left rounded-xl hover:bg-stone-50 active:scale-95 transition-all"
+          >
+            <div className="w-10 h-10 rounded-xl bg-stone-100 text-rose-500 flex items-center justify-center shrink-0">
+              <Trash2 size={20} />
+            </div>
+            <div>
+              <div className="font-bold text-stone-800 text-sm">Eliminar</div>
+              <div className="text-[11px] text-stone-500">Quitar producto del inventario</div>
+            </div>
+          </button>
+        </div>
+      </Modal>
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { api } from '../services/api';
 import { formatCurrency } from '../utils/formatCurrency';
 import { cn } from '../utils/cn';
 import { Skeleton } from './Skeleton';
-import type { DashboardData } from '../types';
+import type { DashboardData, TodayStats } from '../types';
 
 const paymentLabels: Record<string, string> = {
   cash: 'Efectivo',
@@ -68,16 +68,35 @@ export function DashboardTab({ lowStockThreshold, appLoading }: Props) {
 
   const { todayStats, topProducts, lowStockCount, recentSales, weeklySales } = data;
   const maxWeekly = Math.max(...weeklySales.map(w => w.total), ...weeklySales.map(w => w.net), 1);
+  const prev = todayStats.previousDayStats;
+
+  const calcChange = (current: number, previous?: number): { pct: string; abs: string; up: boolean } | null => {
+    if (previous === undefined || previous === 0) return null;
+    const diff = current - previous;
+    const pct = ((diff / previous) * 100);
+    return {
+      pct: (pct >= 0 ? '+' : '') + pct.toFixed(1) + '%',
+      abs: (diff >= 0 ? '+' : '') + (Number.isInteger(diff) ? diff.toString() : diff.toFixed(1)),
+      up: diff >= 0,
+    };
+  };
+
+  const salesChange = calcChange(todayStats.totalSales, prev?.totalSales);
+  const netChange = calcChange(todayStats.totalNet, prev?.totalNet);
+  const ticketAvg = todayStats.ticketCount > 0 ? todayStats.totalSales / todayStats.ticketCount : 0;
+  const prevTicketAvg = prev && prev.ticketCount > 0 ? prev.totalSales / prev.ticketCount : 0;
+  const avgChange = calcChange(ticketAvg, prevTicketAvg);
+  const ticketsChange = calcChange(todayStats.ticketCount, prev?.ticketCount);
 
   return (
     <div className="space-y-4">
       <h2 className="text-lg font-bold text-stone-800">Resumen del día</h2>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-        <SummaryCard icon={DollarSign} label="Ventas" value={formatCurrency(todayStats.totalSales)} color="emerald" />
-        <SummaryCard icon={TrendingUp} label="Ganancia Neta" value={formatCurrency(todayStats.totalNet)} color="blue" />
-        <SummaryCard icon={ShoppingBag} label="Ticket Promedio" value={todayStats.ticketCount > 0 ? formatCurrency(todayStats.totalSales / todayStats.ticketCount) : formatCurrency(0)} color="violet" />
-        <SummaryCard icon={Hash} label="Tickets" value={String(todayStats.ticketCount)} color="amber" />
+        <SummaryCard icon={DollarSign} label="Ventas" value={formatCurrency(todayStats.totalSales)} color="emerald" change={salesChange || undefined} />
+        <SummaryCard icon={TrendingUp} label="Ganancia Neta" value={formatCurrency(todayStats.totalNet)} color="blue" change={netChange || undefined} />
+        <SummaryCard icon={ShoppingBag} label="Ticket Promedio" value={todayStats.ticketCount > 0 ? formatCurrency(ticketAvg) : formatCurrency(0)} color="violet" change={avgChange || undefined} />
+        <SummaryCard icon={Hash} label="Tickets" value={String(todayStats.ticketCount)} color="amber" change={ticketsChange || undefined} />
       </div>
 
       {weeklySales.some(w => w.total > 0) && (
@@ -179,7 +198,7 @@ export function DashboardTab({ lowStockThreshold, appLoading }: Props) {
   );
 }
 
-function SummaryCard({ icon: Icon, label, value, color }: { icon: React.ComponentType<{ size?: number }>; label: string; value: string; color: string }) {
+function SummaryCard({ icon: Icon, label, value, color, change }: { icon: React.ComponentType<{ size?: number }>; label: string; value: string; color: string; change?: { pct: string; up: boolean } }) {
   const colorMap: Record<string, string> = {
     emerald: 'bg-emerald-100 text-emerald-700',
     blue: 'bg-blue-100 text-blue-700',
@@ -200,6 +219,11 @@ function SummaryCard({ icon: Icon, label, value, color }: { icon: React.Componen
         <span className="text-xs font-medium text-stone-500">{label}</span>
       </div>
       <p className="text-xl font-black text-stone-800">{value}</p>
+      {change && (
+        <p className={cn("text-[11px] font-semibold mt-1", change.up ? "text-emerald-600" : "text-stone-400")}>
+          {change.pct} vs ayer
+        </p>
+      )}
     </motion.div>
   );
 }

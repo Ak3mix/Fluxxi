@@ -128,13 +128,14 @@ export const api = {
   },
 
   async getDashboardData(lowStockThreshold: number = 5): Promise<DashboardData> {
-    const [todayStats, topProducts, lowStockCount, recentSales, weeklySales] = await Promise.all([
+    const [todayStats, topProducts, lowStockCount, recentSales, weeklySales, previousDayStats] = await Promise.all([
       SalesRepository.getTodayStats(),
       SalesRepository.getTopProducts(5),
       SalesRepository.getLowStockCount(lowStockThreshold),
       SalesRepository.getRecentSales(5),
       SalesRepository.getWeeklySales(),
+      SalesRepository.getPreviousDayStats(),
     ]);
-    return { todayStats, topProducts, lowStockCount, recentSales, weeklySales };
+    return { todayStats: { ...todayStats, previousDayStats }, topProducts, lowStockCount, recentSales, weeklySales };
   },
 };

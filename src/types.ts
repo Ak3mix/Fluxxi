@@ -116,6 +116,11 @@ export interface TodayStats {
   totalNet: number;
   ticketCount: number;
   cancelledCount: number;
+  previousDayStats?: {
+    totalSales: number;
+    totalNet: number;
+    ticketCount: number;
+  };
 }
 
 export interface DashboardData {
