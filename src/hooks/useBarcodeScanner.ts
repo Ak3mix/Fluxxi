@@ -1,43 +1,24 @@
 import { useRef, useCallback } from 'react';
 import Quagga from '@ericblade/quagga2';
 
-interface UseBarcodeScannerOptions {
-  onDetect: (code: string) => void;
-  onError?: (err: any) => void;
-}
+export function useBarcodeScanner() {
+  const quaggaRef = useRef<typeof Quagga | null>(null);
+  const detectLockRef = useRef(false);
 
-export function useBarcodeScanner({ onDetect, onError }: UseBarcodeScannerOptions) {
-  const isRunningRef = useRef(false);
-  const detectedRef = useRef(false);
-  const handlerRef = useRef<((result: any) => void) | null>(null);
-
-  const stop = useCallback(() => {
-    if (!isRunningRef.current) return;
-    isRunningRef.current = false;
-    detectedRef.current = false;
-    if (handlerRef.current) {
-      try { Quagga.offDetected(handlerRef.current); } catch {}
-      handlerRef.current = null;
-    }
-    try { Quagga.stop(); } catch {}
-  }, []);
-
-  const start = useCallback((containerEl: HTMLElement) => {
-    if (isRunningRef.current) return;
-    isRunningRef.current = true;
-    detectedRef.current = false;
+  const start = useCallback((container: HTMLElement) => {
+    if (quaggaRef.current) return;
+    detectLockRef.current = false;
 
     Quagga.init({
       inputStream: {
-        name: 'Live',
         type: 'LiveStream',
-        target: containerEl,
+        target: container,
         constraints: {
-          width: { min: 640 },
-          height: { min: 480 },
+          width: { ideal: 640 },
+          height: { ideal: 480 },
           facingMode: 'environment',
         },
-        singleChannel: true,
+        area: { top: '20%', right: '10%', left: '10%', bottom: '30%' },
       },
       decoder: {
         readers: [
@@ -45,35 +26,46 @@ export function useBarcodeScanner({ onDetect, onError }: UseBarcodeScannerOption
           'ean_8_reader',
           'code_128_reader',
           'code_39_reader',
-          'codabar_reader',
           'upc_reader',
           'upc_e_reader',
           'i2of5_reader',
+          'codabar_reader',
         ],
       },
-      locate: true,
-      numOfWorkers: 0,
-      frequency: 10,
+      locator: {
+        patchSize: 'medium',
+        halfSample: true,
+      },
     }, (err) => {
       if (err) {
-        isRunningRef.current = false;
-        onError?.(err);
+        console.error('Quagga init error:', err);
         return;
       }
+      quaggaRef.current = Quagga;
       Quagga.start();
     });
 
-    const handler = (result: any) => {
-      if (detectedRef.current) return;
-      const code = result?.codeResult?.code;
+    Quagga.onDetected((data) => {
+      if (detectLockRef.current) return;
+      detectLockRef.current = true;
+
+      const code = data?.codeResult?.code;
       if (code) {
-        detectedRef.current = true;
-        onDetect(code);
+        const event = new CustomEvent('barcode-detected', { detail: code });
+        window.dispatchEvent(event);
       }
-    };
-    handlerRef.current = handler;
-    Quagga.onDetected(handler);
-  }, [onDetect, onError]);
+      stop();
+    });
+  }, []);
+
+  const stop = useCallback(() => {
+    if (quaggaRef.current) {
+      quaggaRef.current.offDetected();
+      quaggaRef.current.stop();
+      quaggaRef.current = null;
+      detectLockRef.current = false;
+    }
+  }, []);
 
   return { start, stop };
 }

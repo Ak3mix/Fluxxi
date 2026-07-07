@@ -1,51 +1,38 @@
 declare module '@ericblade/quagga2' {
   interface QuaggaConfig {
     inputStream: {
-      name?: string;
-      type?: string;
-      target?: HTMLElement | null;
-      constraints?: Record<string, any>;
-      area?: {
-        top?: string;
-        right?: string;
-        left?: string;
-        bottom?: string;
+      type: string;
+      target: HTMLElement;
+      constraints: {
+        width: { ideal: number };
+        height: { ideal: number };
+        facingMode: string;
       };
-      singleChannel?: boolean;
+      area?: { top: string; right: string; left: string; bottom: string };
     };
     decoder: {
-      readers?: string[];
-      debug?: {
-        drawBoundingBox?: boolean;
-        showFrequency?: boolean;
-        drawScanline?: boolean;
-        showPattern?: boolean;
-      };
+      readers: string[];
     };
-    locate?: boolean;
-    numOfWorkers?: number;
-    frequency?: number;
+    locator?: {
+      patchSize: string;
+      halfSample: boolean;
+    };
   }
 
-  interface DetectedResult {
-    codeResult: {
+  interface QuaggaResult {
+    codeResult?: {
       code: string;
-      format: string;
-      start: number;
-      end: number;
-      codeset: number;
-      startInfo: { error: number; code: number; start: number; end: number; priority: number };
-      decodedCodes: { error: number; code: number; start: number; end: number; priority: number }[];
     };
-    line: { x: number; y: number }[];
-    box: { x: number; y: number }[];
-    angle: number;
   }
 
-  export function init(config: QuaggaConfig, callback?: (err: any) => void): void;
-  export function start(): void;
-  export function stop(): void;
-  export function onDetected(callback: (result: DetectedResult) => void): void;
-  export function offDetected(callback: (result: DetectedResult) => void): void;
-  export function canEnumerateTypes(): boolean;
+  interface QuaggaStatic {
+    init(config: QuaggaConfig, callback: (err?: Error) => void): void;
+    start(): void;
+    stop(): void;
+    onDetected(callback: (data: QuaggaResult) => void): void;
+    offDetected(): void;
+  }
+
+  const Quagga: QuaggaStatic;
+  export default Quagga;
 }
