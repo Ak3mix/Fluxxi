@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { LayoutDashboard, List, ShoppingCart, Package, MoreHorizontal, Settings, FileSpreadsheet, Clock, User } from 'lucide-react';
+import { LayoutDashboard, List, ShoppingCart, Package, MoreHorizontal, Settings, FileSpreadsheet, Clock, User, Lock, Download, Upload } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { api } from './services/api';
 import { dbService } from './services/database';
@@ -17,8 +17,13 @@ import { CartTab } from './components/CartTab';
 import { SalesHistoryTab } from './components/SalesHistoryTab';
 import { PaymentModal } from './components/PaymentModal';
 import { SettingsModal } from './components/SettingsModal';
+import { Modal } from './components/Modal';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { App as CapacitorApp } from '@capacitor/app';
+import { Filesystem, Directory } from '@capacitor/filesystem';
+import { Capacitor } from '@capacitor/core';
+import { FilePicker } from '@capawesome/capacitor-file-picker';
+import { dataTransferService } from './services/dataTransferService';
 import type { Product, Session, Card, SaleInput } from './types';
 import type { SettingsMap } from './services/settingsRepository';
 
@@ -33,7 +38,7 @@ const tabLabels: Record<string, string> = {
 export default function App() {
   const { addToast } = useToast();
   const [activeTab, setActiveTab] = useState<'dashboard' | 'catalogo' | 'carrito' | 'inventario' | 'mas'>('dashboard');
-  const [masSection, setMasSection] = useState<'menu' | 'reportes' | 'historial'>('menu');
+  const [masSection, setMasSection] = useState<'menu' | 'reportes' | 'historial' | 'datos'>('menu');
   const [products, setProducts] = useState<Product[]>([]);
   const { cart, addToCart, removeFromCart, updateCartQuantity, clearCart, cartTotal, cartQuantity } = usePersistedCart();
   const [isLoading, setIsLoading] = useState(true);
@@ -41,6 +46,8 @@ export default function App() {
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showSettings, setShowSettings] = useState(false);
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'transfer' | 'split' | null>(null);
+  const [cartPulse, setCartPulse] = useState(false);
+  const [showCloseSessionConfirm, setShowCloseSessionConfirm] = useState(false);
   const [selectedCardId, setSelectedCardId] = useState<number | null>(null);
   const [cards, setCards] = useState<Card[]>([]);
 
@@ -130,12 +137,53 @@ export default function App() {
 
   const handleAddToCart = async (product: Product) => {
     addToCart(product);
+    setCartPulse(true);
+    setTimeout(() => setCartPulse(false), 600);
     try { await Haptics.impact({ style: ImpactStyle.Medium }); } catch {}
   };
 
-  const handleMasSelect = (section: 'reportes' | 'historial') => {
+  const handleMasSelect = (section: 'reportes' | 'historial' | 'datos') => {
     setActiveTab('mas');
     setMasSection(section);
+  };
+
+  const handleCloseSession = async () => {
+    setShowCloseSessionConfirm(false);
+    try {
+      await api.closeSession();
+      await fetchProducts();
+      await fetchSession();
+      addToast('Jornada cerrada correctamente. Se ha iniciado una nueva.', 'success');
+    } catch {
+      addToast('Error al cerrar la jornada', 'error');
+    }
+  };
+
+  const handleExport = async () => {
+    try {
+      await dataTransferService.exportDatabase();
+      addToast('Exportación exitosa', 'success');
+    } catch (e: any) {
+      addToast('Error al exportar: ' + (e.message || e.code || JSON.stringify(e)), 'error');
+    }
+  };
+
+  const handleImport = async () => {
+    try {
+      const result = await FilePicker.pickFiles({
+        types: ['application/zip', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
+      });
+      if (result.files.length > 0) {
+        const file = result.files[0];
+        if (!file.path) throw new Error('No se pudo obtener la ruta del archivo');
+        const fileRead = await Filesystem.readFile({ path: file.path });
+        await dataTransferService.importDatabase(fileRead.data as string);
+        addToast('Importación exitosa, la app se reiniciará', 'success');
+        setTimeout(() => window.location.reload(), 1500);
+      }
+    } catch (e: any) {
+      addToast('Error al importar: ' + (e.message || JSON.stringify(e)), 'error');
+    }
   };
 
   const initializeSplitPayments = (method: 'cash' | 'transfer' | 'split') => {
@@ -303,7 +351,7 @@ export default function App() {
             exit={{ opacity: 0, y: -10 }}
           >
             <ErrorBoundary label="Inventario">
-              <InventoryTab products={products} loading={isLoading} onUpdate={fetchProducts} lowStockThreshold={lowStockThreshold} />
+              <InventoryTab products={products} loading={isLoading} onUpdate={fetchProducts} lowStockThreshold={lowStockThreshold} onAddToCart={handleAddToCart} />
             </ErrorBoundary>
           </motion.div>
         );
@@ -329,7 +377,6 @@ export default function App() {
                 </div>
                 <ReportsTab
                   products={products}
-                  onSessionClose={() => { fetchSession(); fetchProducts(); }}
                   onProductsChange={fetchProducts}
                   businessName={businessName}
                   currencySymbol={settings.currency_symbol || '$'}
@@ -366,6 +413,37 @@ export default function App() {
             </motion.div>
           );
         }
+        if (masSection === 'datos') {
+          return (
+            <motion.div
+              key="mas-datos"
+              initial={{ opacity: 0, y: 10 }}
+              animate={{ opacity: 1, y: 0 }}
+              exit={{ opacity: 0, y: -10 }}
+            >
+              <ErrorBoundary label="Datos">
+                <div className="flex items-center gap-3 mb-6">
+                  <button
+                    onClick={() => setMasSection('menu')}
+                    className="p-2 -ml-2 min-w-[44px] min-h-[44px] flex items-center justify-center"
+                    aria-label="Volver"
+                  >
+                    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round"><path d="M19 12H5M12 19l-7-7 7-7"/></svg>
+                  </button>
+                  <h2 className="text-lg font-black">Exportar / Importar</h2>
+                </div>
+                <div className="space-y-3">
+                  <button onClick={handleExport} className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-bold bg-emerald-50 text-emerald-700 border-2 border-emerald-200 active:scale-95 transition-all">
+                    <Download size={20} /> Exportar Base de Datos
+                  </button>
+                  <button onClick={handleImport} className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-bold bg-blue-50 text-blue-700 border-2 border-blue-200 active:scale-95 transition-all">
+                    <Upload size={20} /> Importar Base de Datos
+                  </button>
+                </div>
+              </ErrorBoundary>
+            </motion.div>
+          );
+        }
         return (
           <motion.div
             key="mas-menu"
@@ -397,6 +475,30 @@ export default function App() {
                 <div>
                   <div className="font-bold text-stone-800">Historial de ventas</div>
                   <div className="text-[11px] text-stone-500">Ventas agrupadas por jornada</div>
+                </div>
+              </button>
+              <button
+                onClick={() => setShowCloseSessionConfirm(true)}
+                className="flex items-center gap-4 w-full p-4 bg-white rounded-2xl border border-stone-200 text-left active:scale-95 transition-transform min-h-[56px]"
+              >
+                <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
+                  <Lock size={20} />
+                </div>
+                <div>
+                  <div className="font-bold text-stone-800">Cerrar Jornada</div>
+                  <div className="text-[11px] text-stone-500">Finalizar la jornada actual</div>
+                </div>
+              </button>
+              <button
+                onClick={() => handleMasSelect('datos')}
+                className="flex items-center gap-4 w-full p-4 bg-white rounded-2xl border border-stone-200 text-left active:scale-95 transition-transform min-h-[56px]"
+              >
+                <div className="w-10 h-10 rounded-xl bg-amber-50 text-amber-600 flex items-center justify-center shrink-0">
+                  <Download size={20} />
+                </div>
+                <div>
+                  <div className="font-bold text-stone-800">Exportar / Importar</div>
+                  <div className="text-[11px] text-stone-500">Respaldar o restaurar información</div>
                 </div>
               </button>
               <button
@@ -450,7 +552,7 @@ export default function App() {
       <nav className="fixed bottom-0 left-0 right-0 bg-white border-t border-stone-200 p-2 pb-safe flex justify-around items-center z-40">
         <NavButton active={activeTab === 'dashboard'} onClick={() => setActiveTab('dashboard')} icon={<LayoutDashboard size={20} />} label="Dashboard" ariaLabel="Ir a Dashboard" />
         <NavButton active={activeTab === 'catalogo'} onClick={() => setActiveTab('catalogo')} icon={<List size={20} />} label="Catálogo" ariaLabel="Ir a Catálogo" />
-        <NavButton active={activeTab === 'carrito'} onClick={() => setActiveTab('carrito')} icon={<ShoppingCart size={20} />} label="Carrito" ariaLabel="Ir a Carrito" badge={cartQuantity > 0 ? cartQuantity : undefined} />
+        <NavButton active={activeTab === 'carrito'} onClick={() => setActiveTab('carrito')} icon={<ShoppingCart size={24} />} label="Carrito" ariaLabel="Ir a Carrito" badge={cartQuantity > 0 ? cartQuantity : undefined} center pulse={cartPulse} />
         <NavButton active={activeTab === 'inventario'} onClick={() => setActiveTab('inventario')} icon={<Package size={20} />} label="Inventario" ariaLabel="Ir a Inventario" />
         <NavButton active={activeTab === 'mas'} onClick={() => { setActiveTab('mas'); setMasSection('menu'); }} icon={<MoreHorizontal size={20} />} label="Más" ariaLabel="Más opciones" />
       </nav>
@@ -473,6 +575,31 @@ export default function App() {
         onTransferInputChange={handleTransferInputChange}
         onProcessSale={handleProcessSale}
       />
+
+      <Modal isOpen={showCloseSessionConfirm} onClose={() => setShowCloseSessionConfirm(false)} title="¿Cerrar Jornada?">
+        <div className="flex flex-col items-center text-center">
+          <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mb-6">
+            <Lock size={32} />
+          </div>
+          <p className="text-stone-500 text-sm mb-8">
+            Esta acción bloqueará las ventas actuales y reiniciará los totales para una nueva jornada.
+          </p>
+          <div className="flex flex-col gap-3 w-full">
+            <button
+              onClick={handleCloseSession}
+              className="w-full py-4 bg-rose-600 text-white rounded-2xl font-bold shadow-lg shadow-rose-100 active:scale-95 transition-transform"
+            >
+              Sí, Cerrar Jornada
+            </button>
+            <button
+              onClick={() => setShowCloseSessionConfirm(false)}
+              className="w-full py-4 text-stone-500 font-bold active:scale-95 transition-transform"
+            >
+              No, Continuar Vendiendo
+            </button>
+          </div>
+        </div>
+      </Modal>
 
       <SettingsModal
         isOpen={showSettings}

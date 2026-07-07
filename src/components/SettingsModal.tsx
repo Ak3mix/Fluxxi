@@ -1,11 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { Camera, X, FileSpreadsheet, ArrowDownCircle } from 'lucide-react';
+import { Camera, X } from 'lucide-react';
 import { Camera as CapacitorCamera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Capacitor } from '@capacitor/core';
 import { FilePicker } from '@capawesome/capacitor-file-picker';
 import { api } from '../services/api';
-import { dataTransferService } from '../services/dataTransferService';
 import { setCurrencySymbol } from '../utils/formatCurrency';
 import { useToast } from '../contexts/ToastContext';
 import { Modal } from './Modal';
@@ -153,35 +152,6 @@ export function SettingsModal({ isOpen, profilePhoto, onClose, onSettingsChange 
     }
   };
 
-  const handleExport = async () => {
-    try {
-      await dataTransferService.exportDatabase();
-      addToast('Exportación exitosa', 'success');
-    } catch (e: any) {
-      console.error('Export error:', e);
-      addToast('Error al exportar: ' + (e.message || e.code || JSON.stringify(e)), 'error');
-    }
-  };
-
-  const handleImport = async () => {
-    try {
-      const result = await FilePicker.pickFiles({
-        types: ['application/zip', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'],
-      });
-      if (result.files.length > 0) {
-        const file = result.files[0];
-        if (!file.path) throw new Error('No se pudo obtener la ruta del archivo');
-        const fileRead = await Filesystem.readFile({ path: file.path });
-        await dataTransferService.importDatabase(fileRead.data as string);
-        addToast('Importación exitosa, la app se reiniciará', 'success');
-        setTimeout(() => window.location.reload(), 1500);
-      }
-    } catch (e: any) {
-      console.error('Import error:', e);
-      addToast('Error al importar: ' + (e.message || JSON.stringify(e)), 'error');
-    }
-  };
-
   const initial = (settings.business_name || 'V')[0].toUpperCase();
 
   return (
@@ -260,18 +230,6 @@ export function SettingsModal({ isOpen, profilePhoto, onClose, onSettingsChange 
               </select>
             </div>
             <button onClick={handleSavePreferences} className="w-full py-3 rounded-2xl font-bold bg-stone-900 text-white active:scale-95 transition-transform">Guardar Preferencias</button>
-          </div>
-        </section>
-
-        <section>
-          <h4 className="text-[10px] uppercase font-black text-stone-500 tracking-widest mb-4">Datos</h4>
-          <div className="flex flex-col gap-3">
-            <button onClick={handleExport} className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl font-bold bg-emerald-50 text-emerald-700 border-2 border-emerald-200 active:scale-95 transition-transform">
-              <FileSpreadsheet size={18} /> Exportar Base de Datos
-            </button>
-            <button onClick={handleImport} className="flex items-center justify-center gap-2 w-full py-3 rounded-2xl font-bold bg-blue-50 text-blue-700 border-2 border-blue-200 active:scale-95 transition-transform">
-              <ArrowDownCircle size={18} /> Importar Base de Datos
-            </button>
           </div>
         </section>
 

@@ -13,13 +13,11 @@ import type { Product, Sale, Session, Movement, Card } from '../types';
 
 export function ReportsTab({
   products,
-  onSessionClose,
   onProductsChange,
   businessName = 'VentasPro',
   currencySymbol = '$',
 }: {
   products: Product[];
-  onSessionClose: () => void;
   onProductsChange: () => void;
   businessName?: string;
   currencySymbol?: string;
@@ -32,8 +30,6 @@ export function ReportsTab({
     session: Session;
   } | null>(null);
   const [history, setHistory] = useState<Session[]>([]);
-  const [isClosing, setIsClosing] = useState(false);
-  const [showConfirmClose, setShowConfirmClose] = useState(false);
   const [editSession, setEditSession] = useState<Session | null>(null);
   const [editSessionName, setEditSessionName] = useState('');
   const [showSalesList, setShowSalesList] = useState(true);
@@ -111,26 +107,6 @@ export function ReportsTab({
     } catch (e) {
       console.error(e);
       addToast('Error al anular la venta', 'error');
-    }
-  };
-
-  const handleCloseDay = async () => {
-    setShowConfirmClose(false);
-    setIsClosing(true);
-    try {
-      const res = await api.closeSession();
-      if (res) {
-        await fetchReport();
-        await fetchHistory();
-        onSessionClose();
-        addToast('Jornada cerrada correctamente. Se ha iniciado una nueva.', 'success');
-      } else {
-        addToast('No se pudo cerrar la jornada', 'error');
-      }
-    } catch {
-      addToast('Error al cerrar la jornada. Intente nuevamente.', 'error');
-    } finally {
-      setIsClosing(false);
     }
   };
 
@@ -301,18 +277,6 @@ export function ReportsTab({
 
       <div className="space-y-3">
         <button
-          disabled={isClosing}
-          onClick={() => setShowConfirmClose(true)}
-          className={cn(
-            'w-full py-4 rounded-2xl font-bold flex items-center justify-center gap-2 transition-all',
-            'bg-rose-600 text-white shadow-lg shadow-rose-100 active:scale-95 disabled:opacity-50'
-          )}
-        >
-          <XCircle size={20} />
-          {isClosing ? 'Cerrando...' : 'Cerrar Jornada Actual'}
-        </button>
-
-        <button
           onClick={() =>
             reportData && handleExportExcel(reportData.session.id, format(new Date(), 'yyyy-MM-dd'), reportData.session.name)
           }
@@ -322,31 +286,6 @@ export function ReportsTab({
           Excel Jornada Actual
         </button>
       </div>
-
-      <Modal isOpen={showConfirmClose} onClose={() => setShowConfirmClose(false)} title="¿Cerrar Jornada?">
-        <div className="flex flex-col items-center text-center">
-          <div className="w-16 h-16 bg-rose-50 text-rose-600 rounded-full flex items-center justify-center mb-6">
-            <XCircle size={32} />
-          </div>
-          <p className="text-stone-500 text-sm mb-8">
-            Esta acción bloqueará las ventas actuales y reiniciará los totales para una nueva jornada.
-          </p>
-          <div className="flex flex-col gap-3 w-full">
-            <button
-              onClick={handleCloseDay}
-              className="w-full py-4 bg-rose-600 text-white rounded-2xl font-bold shadow-lg shadow-rose-100 active:scale-95 transition-transform"
-            >
-              Sí, Cerrar Jornada
-            </button>
-            <button
-              onClick={() => setShowConfirmClose(false)}
-              className="w-full py-4 text-stone-500 font-bold active:scale-95 transition-transform"
-            >
-              No, Continuar Vendiendo
-            </button>
-          </div>
-        </div>
-      </Modal>
 
       <Modal isOpen={!!editSession} onClose={() => setEditSession(null)} title="Editar Jornada">
         <label className="text-xs font-bold text-stone-500 uppercase tracking-widest">Nombre</label>

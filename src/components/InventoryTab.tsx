@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Plus,
+  ShoppingCart,
   ArrowUpCircle,
   ArrowDownCircle,
   Trash2,
@@ -21,7 +22,7 @@ import { MoveInventoryModal } from './MoveInventoryModal';
 import { Modal } from './Modal';
 import type { Product, Card } from '../types';
 
-export function InventoryTab({ products, loading = false, onUpdate, lowStockThreshold = 5 }: { products: Product[]; loading?: boolean; onUpdate: () => void; lowStockThreshold?: number }) {
+export function InventoryTab({ products, loading = false, onUpdate, lowStockThreshold = 5, onAddToCart }: { products: Product[]; loading?: boolean; onUpdate: () => void; lowStockThreshold?: number; onAddToCart?: (product: Product) => void }) {
   const { addToast } = useToast();
   const [activeInventoryTab, setActiveInventoryTab] = useState<'products' | 'cards'>('products');
   const [showAddProduct, setShowAddProduct] = useState(false);
@@ -412,6 +413,22 @@ export function InventoryTab({ products, loading = false, onUpdate, lowStockThre
         variant="bottom-sheet"
       >
         <div className="space-y-2 pb-4">
+          <button
+            onClick={() => {
+              const p = selectedProduct;
+              setSelectedProduct(null);
+              if (p && onAddToCart) onAddToCart(p);
+            }}
+            className="flex items-center gap-4 w-full p-4 text-left rounded-xl hover:bg-stone-50 active:scale-95 transition-all"
+          >
+            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+              <ShoppingCart size={20} />
+            </div>
+            <div>
+              <div className="font-bold text-stone-800 text-sm">Agregar al Carrito</div>
+              <div className="text-[11px] text-stone-500">Añadir producto a la venta</div>
+            </div>
+          </button>
           <button
             onClick={() => {
               const p = selectedProduct;
