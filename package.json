@@ -25,6 +25,7 @@
     "@capacitor/haptics": "^6.0.0",
     "@capacitor/share": "^6.0.0",
     "@capawesome/capacitor-file-picker": "^6.0.0",
+    "@ericblade/quagga2": "^1.12.1",
     "@tailwindcss/vite": "^4.1.14",
     "@vitejs/plugin-react": "^5.0.4",
     "better-sqlite3": "^12.4.1",

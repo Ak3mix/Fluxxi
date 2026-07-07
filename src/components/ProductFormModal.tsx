@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { Camera } from 'lucide-react';
 import { cn } from '../utils/cn';
 import { Modal } from './Modal';
+import { BarcodeScannerOverlay } from './BarcodeScannerOverlay';
 import { ImagePicker } from './ImagePicker';
 import { MigrationService } from '../services/migration';
 import { useToast } from '../contexts/ToastContext';
@@ -8,6 +10,7 @@ import type { Product } from '../types';
 
 export interface ProductFormData {
   name: string;
+  code?: string;
   price: number;
   cost: number;
   stock: number;
@@ -26,16 +29,19 @@ interface Props {
 export function ProductFormModal({ isOpen, initialData, isSaving = false, onSave, onClose }: Props) {
   const { addToast } = useToast();
   const [name, setName] = useState('');
+  const [code, setCode] = useState('');
   const [price, setPrice] = useState('');
   const [cost, setCost] = useState('');
   const [stock, setStock] = useState('');
   const [category, setCategory] = useState('');
   const [image, setImage] = useState<string | null>(null);
   const [errors, setErrors] = useState<{ name?: string; price?: string; stock?: string }>({});
+  const [showScanner, setShowScanner] = useState(false);
 
   useEffect(() => {
     if (initialData) {
       setName(initialData.name);
+      setCode(initialData.code || '');
       setPrice(initialData.price.toString());
       setCost((initialData.cost || 0).toString());
       setStock(initialData.stock.toString());
@@ -43,6 +49,7 @@ export function ProductFormModal({ isOpen, initialData, isSaving = false, onSave
       setImage(initialData.image || null);
     } else {
       setName('');
+      setCode('');
       setPrice('');
       setCost('');
       setStock('');
@@ -83,6 +90,7 @@ export function ProductFormModal({ isOpen, initialData, isSaving = false, onSave
 
     await onSave({
       name: name.trim(),
+      code: code.trim() || undefined,
       price: priceNum,
       cost: costNum,
       stock: stockNum,
@@ -110,6 +118,31 @@ export function ProductFormModal({ isOpen, initialData, isSaving = false, onSave
               className="w-full bg-stone-50 border-none rounded-xl p-3 font-bold"
             />
             {errors.name && <p id="product-name-error" className="text-xs text-rose-500 mt-1">{errors.name}</p>}
+          </div>
+          <div>
+            <label className="text-[10px] uppercase font-bold text-stone-500 mb-1 block">Código</label>
+            <div className="flex gap-2">
+              <input
+                value={code}
+                onChange={e => setCode(e.target.value)}
+                placeholder="Código de barras (opcional)"
+                className="flex-1 bg-stone-50 border-none rounded-xl p-3 font-mono text-sm"
+              />
+              <button
+                type="button"
+                onClick={() => setShowScanner(true)}
+                className="w-11 h-11 rounded-xl bg-stone-900 text-white flex items-center justify-center shrink-0 active:scale-90 transition-transform"
+                aria-label="Escanear código de barras"
+              >
+                <Camera size={16} />
+              </button>
+            </div>
+            {showScanner && (
+              <BarcodeScannerOverlay
+                onDetect={(c) => { setCode(c); setShowScanner(false); }}
+                onClose={() => setShowScanner(false)}
+              />
+            )}
           </div>
           <div>
             <label className="text-[10px] uppercase font-bold text-stone-500 mb-1 block">Categoría</label>

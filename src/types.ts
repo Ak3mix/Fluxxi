@@ -8,6 +8,7 @@ export interface Card {
 
 export interface Product {
   id: number;
+  code?: string;
   name: string;
   price: number;
   cost: number;
@@ -66,6 +67,7 @@ export interface Session {
 
 export interface ProductInput {
   name: string;
+  code?: string;
   price: number;
   cost?: number;
   stock: number;

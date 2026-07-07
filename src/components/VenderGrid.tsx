@@ -1,9 +1,13 @@
-import { Image as ImageIcon, Package, Search } from 'lucide-react';
+import { useState } from 'react';
+import { Camera, Image as ImageIcon, Package, Search } from 'lucide-react';
 import { motion } from 'motion/react';
 import { cn } from '../utils/cn';
 import { useDebounce } from '../hooks/useDebounce';
+import { useToast } from '../contexts/ToastContext';
 import { Skeleton } from './Skeleton';
+import { BarcodeScannerOverlay } from './BarcodeScannerOverlay';
 import { formatCurrency } from '../utils/formatCurrency';
+import { api } from '../services/api';
 import type { Product } from '../types';
 
 interface VenderGridProps {
@@ -36,7 +40,19 @@ function ProductSkeleton() {
 }
 
 export function VenderGrid({ products, searchQuery, selectedCategory, categories, loading = false, lowStockThreshold = 5, onSearchChange, onCategoryChange, onAddToCart }: VenderGridProps) {
+  const { addToast } = useToast();
   const debouncedSearch = useDebounce(searchQuery, 300);
+  const [showScanner, setShowScanner] = useState(false);
+
+  const handleBarcodeDetect = async (code: string) => {
+    setShowScanner(false);
+    const product = await api.getProductByCode(code);
+    if (product) {
+      onAddToCart(product);
+    } else {
+      addToast(`Producto con código ${code} no encontrado`, 'error');
+    }
+  };
 
   const filteredProducts = products
     .filter(p => selectedCategory === 'all' || p.category === selectedCategory)
@@ -65,7 +81,21 @@ export function VenderGrid({ products, searchQuery, selectedCategory, categories
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
             </svg>
           </div>
+          <button
+            onClick={() => setShowScanner(true)}
+            className="w-11 h-11 rounded-xl bg-stone-900 text-white flex items-center justify-center shrink-0 active:scale-90 transition-transform"
+            aria-label="Escanear código de barras"
+          >
+            <Camera size={18} />
+          </button>
         </div>
+
+        {showScanner && (
+          <BarcodeScannerOverlay
+            onDetect={handleBarcodeDetect}
+            onClose={() => setShowScanner(false)}
+          />
+        )}
 
         <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-hide -mx-4 px-4">
           {categories.map(cat => (
