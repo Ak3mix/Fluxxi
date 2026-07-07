@@ -1,70 +1,53 @@
 import { useRef, useCallback } from 'react';
-import Quagga from '@ericblade/quagga2';
+import { BrowserMultiFormatReader, IScannerControls } from '@zxing/browser';
+import { BarcodeFormat, DecodeHintType } from '@zxing/library';
+
+const hints = new Map<DecodeHintType, any>();
+hints.set(DecodeHintType.POSSIBLE_FORMATS, [
+  BarcodeFormat.EAN_13,
+  BarcodeFormat.EAN_8,
+  BarcodeFormat.CODE_128,
+  BarcodeFormat.CODE_39,
+  BarcodeFormat.UPC_A,
+  BarcodeFormat.UPC_E,
+  BarcodeFormat.ITF,
+  BarcodeFormat.CODABAR,
+]);
 
 export function useBarcodeScanner() {
-  const quaggaRef = useRef<typeof Quagga | null>(null);
+  const readerRef = useRef<BrowserMultiFormatReader | null>(null);
+  const controlsRef = useRef<IScannerControls | null>(null);
   const detectLockRef = useRef(false);
 
-  const start = useCallback((container: HTMLElement) => {
-    if (quaggaRef.current) return;
+  const start = useCallback((video: HTMLVideoElement, onDetect: (code: string) => void) => {
+    if (readerRef.current) return;
     detectLockRef.current = false;
 
-    Quagga.init({
-      inputStream: {
-        type: 'LiveStream',
-        target: container,
-        constraints: {
-          width: { ideal: 640 },
-          height: { ideal: 480 },
-          facingMode: 'environment',
-        },
-        area: { top: '20%', right: '10%', left: '10%', bottom: '30%' },
-      },
-      decoder: {
-        readers: [
-          'ean_reader',
-          'ean_8_reader',
-          'code_128_reader',
-          'code_39_reader',
-          'upc_reader',
-          'upc_e_reader',
-          'i2of5_reader',
-          'codabar_reader',
-        ],
-      },
-      locator: {
-        patchSize: 'medium',
-        halfSample: true,
-      },
-    }, (err) => {
-      if (err) {
-        console.error('Quagga init error:', err);
-        return;
-      }
-      quaggaRef.current = Quagga;
-      Quagga.start();
-    });
+    const reader = new BrowserMultiFormatReader(hints);
+    readerRef.current = reader;
 
-    Quagga.onDetected((data) => {
+    reader.decodeFromVideoDevice(undefined, video, (result) => {
       if (detectLockRef.current) return;
-      detectLockRef.current = true;
+      if (!result) return;
 
-      const code = data?.codeResult?.code;
-      if (code) {
-        const event = new CustomEvent('barcode-detected', { detail: code });
-        window.dispatchEvent(event);
-      }
+      detectLockRef.current = true;
+      const code = result.getText();
       stop();
+      onDetect(code);
+    }).then(controls => {
+      controlsRef.current = controls;
+    }).catch(() => {
+      readerRef.current = null;
     });
   }, []);
 
   const stop = useCallback(() => {
-    if (quaggaRef.current) {
-      quaggaRef.current.offDetected();
-      quaggaRef.current.stop();
-      quaggaRef.current = null;
-      detectLockRef.current = false;
+    if (controlsRef.current) {
+      controlsRef.current.stop();
+      controlsRef.current = null;
     }
+    readerRef.current = null;
+    detectLockRef.current = false;
   }, []);
 
   return { start, stop };

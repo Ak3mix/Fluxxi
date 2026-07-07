@@ -8,30 +8,19 @@ interface Props {
 }
 
 export function BarcodeScannerOverlay({ onDetect, onClose }: Props) {
-  const containerRef = useRef<HTMLDivElement>(null);
+  const videoRef = useRef<HTMLVideoElement>(null);
   const { start, stop } = useBarcodeScanner();
 
   useEffect(() => {
-    const handler = (e: Event) => {
-      const code = (e as CustomEvent).detail;
-      onDetect(code);
-    };
-    window.addEventListener('barcode-detected', handler);
-    return () => {
-      window.removeEventListener('barcode-detected', handler);
-      stop();
-    };
-  }, [onDetect, stop]);
-
-  useEffect(() => {
-    if (containerRef.current) {
-      start(containerRef.current);
-    }
+    const video = videoRef.current;
+    if (!video) return;
+    start(video, onDetect);
     return () => stop();
-  }, [start, stop]);
+  }, [start, stop, onDetect]);
 
   return (
     <div className="fixed inset-0 z-100 bg-black flex flex-col">
+      <div className="camera-keepalive" />
       <button
         onClick={onClose}
         className="absolute top-4 right-4 z-10 w-11 h-11 rounded-full bg-black/50 text-white flex items-center justify-center"
@@ -41,7 +30,7 @@ export function BarcodeScannerOverlay({ onDetect, onClose }: Props) {
       </button>
       <div className="flex-1 flex items-center justify-center">
         <div className="relative w-full max-w-md aspect-video">
-          <div ref={containerRef} className="scanner-container w-full h-full" />
+          <video ref={videoRef} className="w-full h-full object-cover rounded-xl" playsInline muted />
           <div className="absolute inset-[20%_10%_30%_10%] border-2 border-emerald-400 rounded-xl pointer-events-none" />
         </div>
       </div>
