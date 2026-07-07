@@ -96,7 +96,7 @@ export const SalesRepository = {
       [saleId]
     );
     for (const item of (items.values || [])) {
-      await dbService.run('UPDATE products SET stock = stock + ? WHERE id = ?', [item.product_id, item.product_id]);
+      await dbService.run('UPDATE products SET stock = stock + ? WHERE id = ?', [item.quantity, item.product_id]);
     }
     // Obtener la sesión de la venta para registrar el movimiento de auditoría
     const saleResult = await dbService.query('SELECT session_id FROM sales WHERE id = ?', [saleId]);

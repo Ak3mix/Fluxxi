@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useEffect, useCallback, useRef } from 'react';
 import { LayoutDashboard, ShoppingCart, Package, ClipboardList, Settings } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { api } from './services/api';
@@ -63,6 +63,7 @@ export default function App() {
   const [selectedCategory, setSelectedCategory] = useState<string>('all');
   const [searchQuery, setSearchQuery] = useState('');
   const [cartPulse, setCartPulse] = useState(false);
+  const processingRef = useRef(false);
 
   const categories = ['all', ...Array.from(new Set(products.map(p => p.category).filter(Boolean)))] as string[];
 
@@ -170,11 +171,13 @@ export default function App() {
   };
 
   const handleProcessSale = async () => {
+    if (processingRef.current) return;
     if (!paymentMethod) return;
     if ((paymentMethod === 'transfer' || paymentMethod === 'split') && !selectedCardId) {
       addToast("Por favor selecciona una tarjeta de destino.", 'error');
       return;
     }
+    processingRef.current = true;
     setLoading(true);
     try {
       let finalPaymentMethod = paymentMethod;
@@ -220,6 +223,7 @@ export default function App() {
       addToast("Error al procesar el pago: " + errorMsg, 'error');
     } finally {
       setLoading(false);
+      processingRef.current = false;
     }
   };
 
