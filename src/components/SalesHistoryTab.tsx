@@ -6,6 +6,7 @@ import { exportSessionExcel } from '../services/excelExportService';
 import { useToast } from '../contexts/ToastContext';
 import { Skeleton } from './Skeleton';
 import { Modal } from './Modal';
+import { cn } from '../utils/cn';
 import { formatCurrency } from '../utils/formatCurrency';
 import type { Sale, Session, Card, Product } from '../types';
 
@@ -115,9 +116,14 @@ export function SalesHistoryTab({ products, businessName = 'VentasPro', currency
             <ChevronLeft size={24} />
           </button>
           <div>
-            <h2 className="text-lg font-black">{selectedSession.name || `Jornada #${selectedSession.id}`}</h2>
+            <div className="flex items-center gap-2">
+              <h2 className="text-lg font-black">{selectedSession.name || `Jornada #${selectedSession.id}`}</h2>
+              {isActiveSession(selectedSession) && (
+                <span className="text-[9px] font-black uppercase bg-emerald-200 text-emerald-800 px-1.5 py-0.5 rounded-full">Activa</span>
+              )}
+            </div>
             <p className="text-xs text-stone-500">
-              {isActiveSession(selectedSession) ? 'Activa' : `Cerrada: ${selectedSession.end_time ? format(new Date(selectedSession.end_time), 'dd/MM/yyyy HH:mm') : ''}`}
+              {isActiveSession(selectedSession) ? 'Jornada en curso' : `Cerrada: ${selectedSession.end_time ? format(new Date(selectedSession.end_time), 'dd/MM/yyyy HH:mm') : ''}`}
             </p>
           </div>
         </div>
@@ -178,34 +184,47 @@ export function SalesHistoryTab({ products, businessName = 'VentasPro', currency
       <p className="text-xs text-stone-500 mb-6">Selecciona una jornada para ver sus ventas</p>
 
       <div className="space-y-3">
-        {sessions.map(session => (
-          <div
-            key={session.id}
-            className="bg-white rounded-2xl border border-stone-200 p-4"
-          >
-            <div className="flex items-center justify-between">
-              <button
-                onClick={() => handleSelectSession(session)}
-                className="flex-1 text-left min-h-[44px]"
-              >
-                <div className="font-bold text-stone-800">{session.name || `Jornada #${session.id}`}</div>
-                <div className="text-[10px] text-stone-500 mt-0.5">
-                  {isActiveSession(session)
-                    ? 'Jornada activa'
-                    : `Cerrada: ${session.end_time ? format(new Date(session.end_time), 'dd/MM/yyyy HH:mm') : 'N/A'}`
-                  }
-                </div>
-              </button>
-              <button
-                onClick={() => handleExportExcel(session)}
-                className="text-emerald-600 p-3 bg-emerald-50 rounded-xl active:scale-90 transition-transform min-w-[44px] min-h-[44px] flex items-center justify-center shrink-0"
-                aria-label={`Exportar Excel de ${session.name || 'jornada'}`}
-              >
-                <FileSpreadsheet size={18} />
-              </button>
+        {sessions.map(session => {
+          const active = isActiveSession(session);
+          return (
+            <div
+              key={session.id}
+              className={cn(
+                "rounded-2xl border p-4",
+                active ? "bg-emerald-50 border-emerald-200" : "bg-white border-stone-200"
+              )}
+            >
+              <div className="flex items-center justify-between">
+                <button
+                  onClick={() => handleSelectSession(session)}
+                  className="flex-1 text-left min-h-[44px]"
+                >
+                  <div className="flex items-center gap-2">
+                    <span className={cn("font-bold", active ? "text-emerald-900" : "text-stone-800")}>
+                      {session.name || `Jornada #${session.id}`}
+                    </span>
+                    {active && (
+                      <span className="text-[9px] font-black uppercase bg-emerald-200 text-emerald-800 px-1.5 py-0.5 rounded-full">Activa</span>
+                    )}
+                  </div>
+                  <div className={cn("text-[10px] mt-0.5", active ? "text-emerald-600" : "text-stone-500")}>
+                    {active ? 'Jornada en curso' : `Cerrada: ${session.end_time ? format(new Date(session.end_time), 'dd/MM/yyyy HH:mm') : 'N/A'}`}
+                  </div>
+                </button>
+                <button
+                  onClick={() => handleExportExcel(session)}
+                  className={cn(
+                    "rounded-xl active:scale-90 transition-transform min-w-[44px] min-h-[44px] flex items-center justify-center shrink-0",
+                    active ? "text-emerald-700 bg-emerald-100" : "text-emerald-600 bg-emerald-50"
+                  )}
+                  aria-label={`Exportar Excel de ${session.name || 'jornada'}`}
+                >
+                  <FileSpreadsheet size={18} />
+                </button>
+              </div>
             </div>
-          </div>
-        ))}
+          );
+        })}
       </div>
     </div>
   );
