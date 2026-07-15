@@ -1,7 +1,7 @@
 import { useState, useEffect, useCallback, useMemo } from 'react';
 import type { Product, CartItem } from '../types';
 
-const STORAGE_KEY = 'ventaspro_cart';
+const STORAGE_KEY = 'fluxxi_cart';
 
 function loadCart(): CartItem[] {
   try {

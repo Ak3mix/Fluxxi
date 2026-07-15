@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { Camera, X } from 'lucide-react';
+import pkg from '../../package.json';
 import { Camera as CapacitorCamera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Capacitor } from '@capacitor/core';
@@ -152,7 +153,7 @@ export function SettingsModal({ isOpen, profilePhoto, onClose, onSettingsChange 
     }
   };
 
-  const initial = (settings.business_name || 'V')[0].toUpperCase();
+  const initial = (settings.business_name || 'F')[0].toUpperCase();
 
   return (
     <Modal isOpen={isOpen} onClose={onClose} title="Configuración" variant="bottom-sheet">
@@ -162,8 +163,8 @@ export function SettingsModal({ isOpen, profilePhoto, onClose, onSettingsChange 
             {photo ? (
               <img src={photo} alt="Foto de perfil" className="w-20 h-20 rounded-full object-cover border-4 border-stone-100" />
             ) : (
-              <div className="w-20 h-20 rounded-full bg-emerald-100 border-4 border-stone-100 flex items-center justify-center">
-                <span className="text-3xl font-black text-emerald-600">{initial}</span>
+              <div className="w-20 h-20 rounded-full bg-violet-100 border-4 border-stone-100 flex items-center justify-center">
+                <span className="text-3xl font-black text-violet-600">{initial}</span>
               </div>
             )}
             <button
@@ -177,7 +178,7 @@ export function SettingsModal({ isOpen, profilePhoto, onClose, onSettingsChange 
           </div>
           <div className="flex gap-2">
             {!photoInit && (
-              <button onClick={handleTakePhoto} className="text-[10px] font-bold text-emerald-600 uppercase" disabled={isUploadingPhoto}>
+              <button onClick={handleTakePhoto} className="text-[10px] font-bold text-violet-600 uppercase" disabled={isUploadingPhoto}>
                 Tomar foto
               </button>
             )}
@@ -234,7 +235,7 @@ export function SettingsModal({ isOpen, profilePhoto, onClose, onSettingsChange 
         </section>
 
         <section className="text-center pt-2 border-t border-stone-100">
-          <p className="text-xs text-stone-400 font-medium">Versión 1.1.0</p>
+          <p className="text-xs text-stone-400 font-medium">Versión {pkg.version}</p>
           <p className="text-xs text-stone-400 font-medium">Creado por Akemix</p>
         </section>
       </div>

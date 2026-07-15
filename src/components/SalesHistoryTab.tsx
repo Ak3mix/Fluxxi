@@ -18,7 +18,7 @@ interface Props {
   currencySymbol?: string;
 }
 
-export function SalesHistoryTab({ products, businessName = 'VentasPro', currencySymbol = '$' }: Props) {
+export function SalesHistoryTab({ products, businessName = 'Fluxxi', currencySymbol = '$' }: Props) {
   const { addToast } = useToast();
   const [loading, setLoading] = useState(true);
   const [sessions, setSessions] = useState<Session[]>([]);
@@ -211,23 +211,23 @@ export function SalesHistoryTab({ products, businessName = 'VentasPro', currency
 
       <div className="space-y-3">
         {activeSession && (
-          <div className="rounded-2xl border p-4 bg-emerald-50 border-emerald-200">
+          <div className="rounded-2xl border p-4 bg-violet-50 border-violet-200">
             <div className="flex items-center justify-between">
               <button
                 onClick={() => handleSelectSession(activeSession)}
                 className="flex-1 text-left min-h-[44px]"
               >
                 <div className="flex items-center gap-2">
-                  <span className="font-bold text-emerald-900">
+                  <span className="font-bold text-violet-900">
                     {activeSession.name || `Jornada #${activeSession.id}`}
                   </span>
-                  <span className="text-[9px] font-black uppercase bg-emerald-200 text-emerald-800 px-1.5 py-0.5 rounded-full">Activa</span>
+                  <span className="text-[9px] font-black uppercase bg-violet-200 text-violet-800 px-1.5 py-0.5 rounded-full">Activa</span>
                 </div>
-                <div className="text-[10px] mt-0.5 text-emerald-600">Jornada en curso</div>
+                <div className="text-[10px] mt-0.5 text-violet-600">Jornada en curso</div>
               </button>
               <button
                 onClick={() => handleExportExcel(activeSession)}
-                className="text-emerald-700 bg-emerald-100 rounded-xl active:scale-90 transition-transform min-w-[44px] min-h-[44px] flex items-center justify-center shrink-0"
+                className="text-violet-700 bg-violet-100 rounded-xl active:scale-90 transition-transform min-w-[44px] min-h-[44px] flex items-center justify-center shrink-0"
                 aria-label={`Exportar Excel de ${activeSession.name || 'jornada'}`}
               >
                 <FileSpreadsheet size={18} />
@@ -274,7 +274,7 @@ export function SalesHistoryTab({ products, businessName = 'VentasPro', currency
                       </button>
                       <button
                         onClick={() => handleExportExcel(session)}
-                        className="text-emerald-600 p-3 bg-emerald-50 rounded-xl active:scale-90 transition-transform min-w-[44px] min-h-[44px] flex items-center justify-center shrink-0"
+                        className="text-violet-600 p-3 bg-violet-50 rounded-xl active:scale-90 transition-transform min-w-[44px] min-h-[44px] flex items-center justify-center shrink-0"
                         aria-label={`Exportar Excel de ${session.name || 'jornada'}`}
                       >
                         <FileSpreadsheet size={18} />

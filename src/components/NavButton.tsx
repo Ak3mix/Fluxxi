@@ -10,26 +10,26 @@ export function NavButton({ active, onClick, icon, label, ariaLabel, badge, cent
       aria-current={active ? 'page' : undefined}
       className={cn(
         "flex flex-col items-center gap-0.5 p-2 transition-all relative",
-        center ? "text-emerald-600" : active ? "text-emerald-600" : "text-stone-500",
+        center ? "text-violet-600" : active ? "text-violet-600" : "text-stone-500",
         center && "-mt-2"
       )}
     >
       {active && !center && (
         <motion.div
           layoutId="nav-active"
-          className="absolute -top-2 w-8 h-1 bg-emerald-600 rounded-full"
+          className="absolute -top-2 w-8 h-1 bg-violet-600 rounded-full"
         />
       )}
       <div className={cn(
         "relative flex items-center justify-center transition-all",
         center
-          ? cn("w-14 h-14 rounded-full shadow-lg shadow-emerald-200", pulse ? "bg-emerald-600 scale-105" : "bg-emerald-500")
+          ? cn("w-14 h-14 rounded-full shadow-lg shadow-violet-200", pulse ? "bg-violet-600 scale-105" : "bg-violet-500")
           : ""
       )}>
         <div className={cn(center && "text-white", !center && "relative")}>
           {icon}
           {!center && badge !== undefined && (
-            <span className="absolute -top-1.5 -right-2 bg-emerald-500 text-white text-[9px] font-black min-w-[16px] h-4 rounded-full flex items-center justify-center px-1 leading-none">
+            <span className="absolute -top-1.5 -right-2 bg-violet-500 text-white text-[9px] font-black min-w-[16px] h-4 rounded-full flex items-center justify-center px-1 leading-none">
               {badge}
             </span>
           )}
@@ -42,7 +42,7 @@ export function NavButton({ active, onClick, icon, label, ariaLabel, badge, cent
       </div>
       <span className={cn(
         "text-[10px] font-bold uppercase tracking-tighter",
-        center ? "text-emerald-600" : ""
+        center ? "text-violet-600" : ""
       )}>{label}</span>
     </button>
   );

@@ -16,7 +16,7 @@ import type { GroupedSessions } from '../utils/groupSessions';
 export function ReportsTab({
   products,
   onProductsChange,
-  businessName = 'VentasPro',
+  businessName = 'Fluxxi',
   currencySymbol = '$',
 }: {
   products: Product[];
@@ -190,9 +190,9 @@ export function ReportsTab({
         </div>
       ) : (
         <div className="grid grid-cols-2 gap-3">
-          <div className="bg-emerald-50 p-4 rounded-3xl border border-emerald-100 flex flex-col justify-center">
-            <div className="text-[10px] uppercase font-bold text-emerald-600 mb-1">Efectivo</div>
-            <div className="text-xl sm:text-2xl font-black text-emerald-900 leading-none">{formatCurrency(totals.cash)}</div>
+          <div className="bg-violet-50 p-4 rounded-3xl border border-violet-100 flex flex-col justify-center">
+            <div className="text-[10px] uppercase font-bold text-violet-600 mb-1">Efectivo</div>
+            <div className="text-xl sm:text-2xl font-black text-violet-900 leading-none">{formatCurrency(totals.cash)}</div>
           </div>
           <div className="bg-blue-50 p-4 rounded-3xl border border-blue-100 flex flex-col justify-center">
             <div className="text-[10px] uppercase font-bold text-blue-600 mb-1">Transferencia</div>
@@ -418,7 +418,7 @@ export function ReportsTab({
                           <div className="flex gap-1 shrink-0">
                             <button onClick={() => handleEditSession(session)} className="text-stone-500 p-2.5 bg-stone-100 rounded-xl active:scale-90 transition-transform" title="Editar nombre" aria-label={`Editar nombre de ${session.name || 'jornada'}`}><Edit size={16} /></button>
                             <button onClick={() => setDeleteSessionId(session.id)} className="text-rose-500 p-2.5 bg-rose-50 rounded-xl active:scale-90 transition-transform" title="Eliminar jornada" aria-label={`Eliminar ${session.name || 'jornada'}`}><Trash2 size={16} /></button>
-                            <button onClick={() => handleExportExcel(session.id, format(new Date(session.end_time || ''), 'yyyy-MM-dd'), session.name)} className="text-emerald-600 p-2.5 bg-emerald-50 rounded-xl active:scale-90 transition-transform" title="Exportar Excel" aria-label={`Exportar Excel de ${session.name || 'jornada'}`}><FileSpreadsheet size={16} /></button>
+                            <button onClick={() => handleExportExcel(session.id, format(new Date(session.end_time || ''), 'yyyy-MM-dd'), session.name)} className="text-violet-600 p-2.5 bg-violet-50 rounded-xl active:scale-90 transition-transform" title="Exportar Excel" aria-label={`Exportar Excel de ${session.name || 'jornada'}`}><FileSpreadsheet size={16} /></button>
                           </div>
                         </div>
                       ))}

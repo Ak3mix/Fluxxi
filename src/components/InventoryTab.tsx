@@ -421,7 +421,7 @@ export function InventoryTab({ products, loading = false, onUpdate, lowStockThre
             }}
             className="flex items-center gap-4 w-full p-4 text-left rounded-xl hover:bg-stone-50 active:scale-95 transition-all"
           >
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center shrink-0">
               <ShoppingCart size={20} />
             </div>
             <div>
@@ -437,7 +437,7 @@ export function InventoryTab({ products, loading = false, onUpdate, lowStockThre
             }}
             className="flex items-center gap-4 w-full p-4 text-left rounded-xl hover:bg-stone-50 active:scale-95 transition-all"
           >
-            <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+            <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center shrink-0">
               <ArrowUpCircle size={20} />
             </div>
             <div>

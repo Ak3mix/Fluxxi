@@ -54,7 +54,7 @@ export function PaymentModal({
       <div className="grid grid-cols-3 gap-3 mb-6">
         <button
           onClick={() => onPaymentMethodChange('cash')}
-          className={cn("flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all", paymentMethod === 'cash' ? "border-emerald-500 bg-emerald-50 text-emerald-700" : "border-stone-100 bg-stone-50 text-stone-500")}
+          className={cn("flex flex-col items-center gap-2 p-4 rounded-2xl border-2 transition-all", paymentMethod === 'cash' ? "border-violet-500 bg-violet-50 text-violet-700" : "border-stone-100 bg-stone-50 text-stone-500")}
         >
           <DollarSign size={28} />
           <span className="font-bold text-xs">Efectivo</span>
@@ -133,7 +133,7 @@ export function PaymentModal({
           <div className="pt-3 border-t border-purple-200">
             <div className="flex justify-between items-center">
               <span className="text-xs font-bold text-purple-600 uppercase">Suma:</span>
-              <span className={cn("text-lg font-black", Math.abs((splitPayments.cash + splitPayments.transfer) - cartTotal) < 0.01 ? "text-emerald-600" : "text-rose-500")}>
+              <span className={cn("text-lg font-black", Math.abs((splitPayments.cash + splitPayments.transfer) - cartTotal) < 0.01 ? "text-violet-600" : "text-rose-500")}>
                 {formatCurrency(splitPayments.cash + splitPayments.transfer)}
               </span>
             </div>
@@ -151,7 +151,7 @@ export function PaymentModal({
         <button
           disabled={!paymentMethod || loading || (paymentMethod === 'split' && Math.abs((splitPayments.cash + splitPayments.transfer) - cartTotal) >= 0.01)}
           onClick={onProcessSale}
-          className="flex-[2] py-4 rounded-2xl font-bold text-white bg-emerald-600 shadow-lg shadow-emerald-100 disabled:opacity-50"
+          className="flex-[2] py-4 rounded-2xl font-bold text-white bg-violet-600 shadow-lg shadow-violet-100 disabled:opacity-50"
         >
           {loading ? "Procesando..." : "Confirmar Venta"}
         </button>

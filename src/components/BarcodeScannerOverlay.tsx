@@ -31,7 +31,7 @@ export function BarcodeScannerOverlay({ onDetect, onClose }: Props) {
       <div className="flex-1 flex items-center justify-center">
         <div className="relative w-full max-w-md aspect-video">
           <video ref={videoRef} className="w-full h-full object-cover rounded-xl" playsInline muted />
-          <div className="absolute inset-[20%_10%_30%_10%] border-2 border-emerald-400 rounded-xl pointer-events-none" />
+          <div className="absolute inset-[20%_10%_30%_10%] border-2 border-violet-400 rounded-xl pointer-events-none" />
         </div>
       </div>
       <p className="text-white text-center text-sm pb-8">Apunta al código de barras</p>

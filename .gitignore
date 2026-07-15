@@ -23,6 +23,12 @@ node_modules/
 .vscode/
 .idea/
 
+# Build output
+dist/
+
+# Capacitor plugin build artifacts
+android/capacitor-cordova-android-plugins/build/
+
 # Android keys (Sensitive)
 *.keystore
 *.jks

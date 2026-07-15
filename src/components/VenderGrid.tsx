@@ -131,7 +131,7 @@ export function VenderGrid({ products, searchQuery, selectedCategory, categories
                 className={cn(
                   "p-3 sm:p-4 rounded-3xl border text-left transition-all active:scale-95 flex flex-col justify-between min-h-[140px]",
                   product.stock > 0
-                    ? "bg-white border-stone-200 shadow-sm hover:border-emerald-200"
+                    ? "bg-white border-stone-200 shadow-sm hover:border-violet-200"
                     : "bg-stone-50 border-stone-100 opacity-60 grayscale"
                 )}
               >
@@ -149,7 +149,7 @@ export function VenderGrid({ products, searchQuery, selectedCategory, categories
                     </div>
                   )}
                   <div className="font-black text-stone-900 text-sm leading-tight mb-1 line-clamp-2">{product.name}</div>
-                  <div className="text-emerald-600 font-black text-base">{formatCurrency(product.price)}</div>
+                  <div className="text-violet-600 font-black text-base">{formatCurrency(product.price)}</div>
                   {product.category && (
                     <div className="text-[10px] uppercase font-bold text-stone-500 mt-1">{product.category}</div>
                   )}

@@ -211,7 +211,7 @@ export function ProductFormModal({ isOpen, initialData, isSaving = false, onSave
           <button type="button" onClick={onClose} className="flex-1 py-3 font-bold text-stone-500">Cancelar</button>
           <button type="submit" disabled={isSaving} className={cn(
             "flex-1 py-3 text-white rounded-xl font-bold disabled:opacity-50",
-            isEditing ? "bg-emerald-600" : "bg-stone-900"
+            isEditing ? "bg-violet-600" : "bg-stone-900"
           )}>
             {isSaving ? (isEditing ? 'Actualizando...' : 'Guardando...') : (isEditing ? 'Actualizar' : 'Guardar')}
           </button>

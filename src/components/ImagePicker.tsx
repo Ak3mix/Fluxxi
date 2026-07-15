@@ -104,11 +104,11 @@ export function ImagePicker({ currentImage, onImageCapture, onImageClear }: Prop
         type="button"
         disabled={isLoading}
         onClick={takePhoto}
-        className="flex flex-col items-center justify-center w-24 h-24 bg-emerald-50 rounded-xl border-2 border-emerald-200 disabled:opacity-50"
+        className="flex flex-col items-center justify-center w-24 h-24 bg-violet-50 rounded-xl border-2 border-violet-200 disabled:opacity-50"
         aria-label="Tomar foto"
       >
-        <CameraIcon size={32} className="text-emerald-500" />
-        <span className="text-[10px] text-emerald-600 mt-1 font-bold">Tomar foto</span>
+        <CameraIcon size={32} className="text-violet-500" />
+        <span className="text-[10px] text-violet-600 mt-1 font-bold">Tomar foto</span>
       </button>
       <button
         type="button"

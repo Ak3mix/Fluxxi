@@ -71,7 +71,7 @@ export function CartModal({ show, cart, cartTotal, onClose, onRemove, onUpdateQu
         </div>
         <button
           onClick={onProceedToPayment}
-          className="w-full bg-emerald-600 text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-emerald-100 active:scale-95 transition-transform"
+          className="w-full bg-violet-600 text-white py-5 rounded-2xl font-black text-lg shadow-xl shadow-violet-100 active:scale-95 transition-transform"
         >
           Continuar al Pago
         </button>

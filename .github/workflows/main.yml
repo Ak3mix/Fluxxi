@@ -41,8 +41,8 @@ jobs:
       # Cambiar el nombre de la app dinámicamente y la versión
       - name: Update App Name and Version
         run: |
-          sed -i 's/<string name="app_name">.*<\/string>/<string name="app_name">VentasPro<\/string>/g' android/app/src/main/res/values/strings.xml
-          sed -i 's/<string name="title_activity_main">.*<\/string>/<string name="title_activity_main">VentasPro<\/string>/g' android/app/src/main/res/values/strings.xml
+          sed -i 's/<string name="app_name">.*<\/string>/<string name="app_name">Fluxxi<\/string>/g' android/app/src/main/res/values/strings.xml
+          sed -i 's/<string name="title_activity_main">.*<\/string>/<string name="title_activity_main">Fluxxi<\/string>/g' android/app/src/main/res/values/strings.xml
           sed -i 's/versionCode .*/versionCode ${{ github.run_number }}/' android/app/build.gradle
           sed -i 's/versionName .*/versionName "1.1.${{ github.run_number }}"/' android/app/build.gradle
 
@@ -62,10 +62,10 @@ jobs:
           sudo apt-get install -y apksigner
           UNSIGNED_APK=$(find android/app/build/outputs/apk/release -name "*-universal-release-unsigned.apk" | head -n 1)
           echo "Signing: $UNSIGNED_APK"
-          apksigner sign --ks android/my-upload-key.keystore --ks-key-alias ${{ secrets.ANDROID_KEY_ALIAS }} --ks-pass pass:${{ secrets.ANDROID_KEY_PASSWORD }} --key-pass pass:${{ secrets.ANDROID_KEY_PASSWORD }} --out android/app/build/outputs/apk/release/App_de_Ventas_v1.1.${{ github.run_number }}.apk "$UNSIGNED_APK"
+          apksigner sign --ks android/my-upload-key.keystore --ks-key-alias ${{ secrets.ANDROID_KEY_ALIAS }} --ks-pass pass:${{ secrets.ANDROID_KEY_PASSWORD }} --key-pass pass:${{ secrets.ANDROID_KEY_PASSWORD }} --out android/app/build/outputs/apk/release/Fluxxi_v1.1.${{ github.run_number }}.apk "$UNSIGNED_APK"
 
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
-          name: App_de_Ventas_v1.1.${{ github.run_number }}
-          path: android/app/build/outputs/apk/release/App_de_Ventas_v1.1.${{ github.run_number }}.apk
+          name: Fluxxi_v1.1.${{ github.run_number }}
+          path: android/app/build/outputs/apk/release/Fluxxi_v1.1.${{ github.run_number }}.apk

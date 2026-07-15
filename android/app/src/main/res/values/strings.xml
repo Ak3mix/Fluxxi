@@ -1,7 +1,7 @@
 <?xml version='1.0' encoding='utf-8'?>
 <resources>
-    <string name="app_name">VentasPro</string>
-    <string name="title_activity_main">VentasPro</string>
-    <string name="package_name">com.example.app</string>
-    <string name="custom_url_scheme">com.example.app</string>
+    <string name="app_name">Fluxxi</string>
+    <string name="title_activity_main">Fluxxi</string>
+    <string name="package_name">com.fluxxi.app</string>
+    <string name="custom_url_scheme">com.fluxxi.app</string>
 </resources>

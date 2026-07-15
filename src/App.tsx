@@ -278,7 +278,7 @@ export default function App() {
     }
   };
 
-  const businessName = settings.business_name || 'VentasPro';
+  const businessName = settings.business_name || 'Fluxxi';
   const initial = businessName[0].toUpperCase();
   const lowStockThreshold = parseInt(settings.low_stock_threshold || '5', 10);
   const defaultPaymentMethod = (settings.default_payment_method || 'cash') as 'cash' | 'transfer' | 'split';
@@ -433,7 +433,7 @@ export default function App() {
                   <h2 className="text-lg font-black">Exportar / Importar</h2>
                 </div>
                 <div className="space-y-3">
-                  <button onClick={handleExport} className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-bold bg-emerald-50 text-emerald-700 border-2 border-emerald-200 active:scale-95 transition-all">
+                  <button onClick={handleExport} className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-bold bg-violet-50 text-violet-700 border-2 border-violet-200 active:scale-95 transition-all">
                     <Download size={20} /> Exportar Base de Datos
                   </button>
                   <button onClick={handleImport} className="flex items-center justify-center gap-2 w-full py-4 rounded-2xl font-bold bg-blue-50 text-blue-700 border-2 border-blue-200 active:scale-95 transition-all">
@@ -457,7 +457,7 @@ export default function App() {
                 onClick={() => handleMasSelect('reportes')}
                 className="flex items-center gap-4 w-full p-4 bg-white rounded-2xl border border-stone-200 text-left active:scale-95 transition-transform min-h-[56px]"
               >
-                <div className="w-10 h-10 rounded-xl bg-emerald-50 text-emerald-600 flex items-center justify-center shrink-0">
+                <div className="w-10 h-10 rounded-xl bg-violet-50 text-violet-600 flex items-center justify-center shrink-0">
                   <FileSpreadsheet size={20} />
                 </div>
                 <div>

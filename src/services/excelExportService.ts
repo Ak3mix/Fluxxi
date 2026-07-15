@@ -18,7 +18,7 @@ export interface ExcelExportParams {
 }
 
 export async function exportSessionExcel(params: ExcelExportParams): Promise<void> {
-  const { sessionId, sessionDate, sales, movements, products, cards, businessName = 'VentasPro', currencySymbol = '$', sessionName } = params;
+  const { sessionId, sessionDate, sales, movements, products, cards, businessName = 'Fluxxi', currencySymbol = '$', sessionName } = params;
 
   const totals = sales.reduce(
     (acc, s) => {
@@ -154,7 +154,7 @@ export async function exportSessionExcel(params: ExcelExportParams): Promise<voi
   const ws = XLSX.utils.json_to_sheet(combinedData, { skipHeader: true });
   XLSX.utils.book_append_sheet(wb, ws, 'Reporte Completo');
 
-  const fileName = `Reporte_VentasPro_Jornada_${sessionId}_${sessionDate}.xlsx`;
+  const fileName = `Reporte_Fluxxi_Jornada_${sessionId}_${sessionDate}.xlsx`;
 
   if (Capacitor.isNativePlatform()) {
     const wbout = XLSX.write(wb, { bookType: 'xlsx', type: 'base64' });

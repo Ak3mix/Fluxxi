@@ -104,7 +104,7 @@ export function DashboardTab({ lowStockThreshold, appLoading }: Props) {
           <h3 className="text-sm font-semibold text-stone-500 uppercase tracking-wider mb-3">Ventas semanales</h3>
           <div className="flex items-center gap-3 mb-3">
             <div className="flex items-center gap-1.5">
-              <div className="w-3 h-3 rounded-sm bg-emerald-500" />
+              <div className="w-3 h-3 rounded-sm bg-violet-500" />
               <span className="text-[10px] text-stone-500">Ventas</span>
             </div>
             <div className="flex items-center gap-1.5">
@@ -115,11 +115,11 @@ export function DashboardTab({ lowStockThreshold, appLoading }: Props) {
           <div className="flex items-end gap-2" style={{ height: '140px' }}>
             {weeklySales.map((w, i) => (
               <div key={i} className="flex-1 flex flex-col items-center gap-0.5 self-end">
-                <span className="text-[9px] font-bold text-emerald-600 leading-tight">{formatCurrency(w.total)}</span>
+                <span className="text-[9px] font-bold text-violet-600 leading-tight">{formatCurrency(w.total)}</span>
                 <span className="text-[8px] font-medium text-blue-600 leading-tight">{formatCurrency(w.net)}</span>
                 <div className="flex gap-0.5 w-full items-end justify-center">
                   <div
-                    className="w-[40%] bg-emerald-500 rounded-t-sm transition-all"
+                    className="w-[40%] bg-violet-500 rounded-t-sm transition-all"
                     style={{ height: Math.max((w.total / maxWeekly) * 100, w.total > 0 ? 4 : 1) + 'px' }}
                   />
                   <div
@@ -200,7 +200,7 @@ export function DashboardTab({ lowStockThreshold, appLoading }: Props) {
 
 function SummaryCard({ icon: Icon, label, value, color, change }: { icon: React.ComponentType<{ size?: number }>; label: string; value: string; color: string; change?: { pct: string; up: boolean } }) {
   const colorMap: Record<string, string> = {
-    emerald: 'bg-emerald-100 text-emerald-700',
+    emerald: 'bg-violet-100 text-violet-700',
     blue: 'bg-blue-100 text-blue-700',
     violet: 'bg-violet-100 text-violet-700',
     amber: 'bg-amber-100 text-amber-700',
@@ -220,7 +220,7 @@ function SummaryCard({ icon: Icon, label, value, color, change }: { icon: React.
       </div>
       <p className="text-xl font-black text-stone-800">{value}</p>
       {change && (
-        <p className={cn("text-[11px] font-semibold mt-1", change.up ? "text-emerald-600" : "text-stone-400")}>
+        <p className={cn("text-[11px] font-semibold mt-1", change.up ? "text-violet-600" : "text-stone-400")}>
           {change.pct} vs ayer
         </p>
       )}

@@ -1,19 +1,19 @@
 <div align="center">
-  <h1>VentasPro</h1>
+  <h1>Fluxxi</h1>
   <p><strong>Sistema de gestión de ventas para Android</strong></p>
 
   <p>
-    <a href="https://github.com/Ak3mix/App_de_Ventas/actions/workflows/main.yml">
-      <img src="https://github.com/Ak3mix/App_de_Ventas/actions/workflows/main.yml/badge.svg" alt="Build Status">
+    <a href="https://github.com/Ak3mix/Fluxxi/actions/workflows/main.yml">
+      <img src="https://github.com/Ak3mix/Fluxxi/actions/workflows/main.yml/badge.svg" alt="Build Status">
     </a>
-    <a href="https://github.com/Ak3mix/App_de_Ventas">
-      <img src="https://img.shields.io/github/repo-size/Ak3mix/App_de_Ventas" alt="Repo Size">
+    <a href="https://github.com/Ak3mix/Fluxxi">
+      <img src="https://img.shields.io/github/repo-size/Ak3mix/Fluxxi" alt="Repo Size">
     </a>
-    <a href="https://github.com/Ak3mix/App_de_Ventas/blob/main/LICENSE">
+    <a href="https://github.com/Ak3mix/Fluxxi/blob/main/LICENSE">
       <img src="https://img.shields.io/badge/license-MIT-blue" alt="License">
     </a>
-    <a href="https://github.com/Ak3mix/App_de_Ventas/releases">
-      <img src="https://img.shields.io/github/v/release/Ak3mix/App_de_Ventas" alt="Latest Release">
+    <a href="https://github.com/Ak3mix/Fluxxi/releases">
+      <img src="https://img.shields.io/github/v/release/Ak3mix/Fluxxi" alt="Latest Release">
     </a>
   </p>
 </div>
@@ -96,7 +96,7 @@ El pipeline en `.github/workflows/main.yml` se ejecuta automáticamente al pushe
 | Firma | Decodifica keystore desde `ANDROID_KEYSTORE_BASE64` (secreto) |
 | Versión | `versionCode = run_number`, `versionName = 1.1.X` |
 | APK | `assembleRelease` con split ABI `arm64-v8a` |
-| Artefacto | `App_de_Ventas_v1.1.X.apk` firmado, disponible en Actions |
+| Artefacto | `Fluxxi_v1.1.X.apk` firmado, disponible en Actions |
 
 ### Secrets requeridos en GitHub
 

@@ -2,8 +2,8 @@
 import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.tuapp.ejemplo',
-  appName: 'VentasPro',
+  appId: 'com.fluxxi.app',
+  appName: 'Fluxxi',
   webDir: 'dist',
   bundledWebRuntime: false,
   android: {

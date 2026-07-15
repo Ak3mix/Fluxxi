@@ -44,7 +44,7 @@ export function ToastProvider({ children }: { children: ReactNode }) {
               exit={{ opacity: 0, y: -20, scale: 0.9 }}
               className={cn(
                 'px-6 py-3 rounded-2xl font-bold shadow-xl pointer-events-auto max-w-sm w-full text-center',
-                toast.type === 'success' && 'bg-emerald-600 text-white',
+                toast.type === 'success' && 'bg-violet-600 text-white',
                 toast.type === 'error' && 'bg-rose-600 text-white',
                 toast.type === 'info' && 'bg-stone-900 text-white',
               )}
