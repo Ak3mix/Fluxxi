@@ -19,7 +19,6 @@ import { PaymentModal } from './components/PaymentModal';
 import { SettingsModal } from './components/SettingsModal';
 import { Modal } from './components/Modal';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
-import { SplashScreen } from '@capacitor/splash-screen';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Capacitor } from '@capacitor/core';
@@ -114,7 +113,6 @@ export default function App() {
         console.error("Error initializing app:", e);
       } finally {
         setIsLoading(false);
-        SplashScreen.hide();
       }
     };
     init();
