@@ -76,6 +76,14 @@ export default function App() {
 
   const categories = ['all', ...Array.from(new Set(products.map(p => p.category).filter(Boolean)))] as string[];
 
+  const loadSettings = async () => {
+    const s = await api.getAllSettings();
+    setSettings(s);
+    setCurrencySymbol(s.currency_symbol || '$');
+    const photo = await api.getProfilePhoto();
+    setProfilePhoto(photo);
+  };
+
   const handleSettingsChange = (s: SettingsMap) => {
     setSettings(s);
     setCurrencySymbol(s.currency_symbol || '$');
@@ -177,8 +185,9 @@ export default function App() {
         if (!file.path) throw new Error('No se pudo obtener la ruta del archivo');
         const fileRead = await Filesystem.readFile({ path: file.path });
         await dataTransferService.importDatabase(fileRead.data as string);
-        addToast('Importación exitosa, la app se reiniciará', 'success');
-        setTimeout(() => window.location.reload(), 1500);
+        clearCart();
+        await Promise.all([fetchProducts(), fetchSession(), loadSettings()]);
+        addToast('Importación exitosa', 'success');
       }
     } catch (e: any) {
       addToast('Error al importar: ' + (e.message || JSON.stringify(e)), 'error');
