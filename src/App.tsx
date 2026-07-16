@@ -20,6 +20,7 @@ import { SettingsModal } from './components/SettingsModal';
 import { Modal } from './components/Modal';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
 import { App as CapacitorApp } from '@capacitor/app';
+import { FirstLaunchTutorial } from './components/FirstLaunchTutorial';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Capacitor } from '@capacitor/core';
 import { FilePicker } from '@capawesome/capacitor-file-picker';
@@ -53,6 +54,7 @@ export default function App() {
 
   const [settings, setSettings] = useState<SettingsMap>({});
   const [profilePhoto, setProfilePhoto] = useState<string | null>(null);
+  const [showTutorial, setShowTutorial] = useState(false);
 
   useEffect(() => {
     api.getCards().then(setCards);
@@ -73,14 +75,6 @@ export default function App() {
   const processingRef = useRef(false);
 
   const categories = ['all', ...Array.from(new Set(products.map(p => p.category).filter(Boolean)))] as string[];
-
-  const loadSettings = async () => {
-    const s = await api.getAllSettings();
-    setSettings(s);
-    setCurrencySymbol(s.currency_symbol || '$');
-    const photo = await api.getProfilePhoto();
-    setProfilePhoto(photo);
-  };
 
   const handleSettingsChange = (s: SettingsMap) => {
     setSettings(s);
@@ -106,7 +100,12 @@ export default function App() {
     const init = async () => {
       try {
         await dbService.initializeDatabase();
-        await loadSettings();
+        const s = await api.getAllSettings();
+        setSettings(s);
+        setCurrencySymbol(s.currency_symbol || '$');
+        const photo = await api.getProfilePhoto();
+        setProfilePhoto(photo);
+        if (s['tutorial_completed'] !== 'true') setShowTutorial(true);
         await MigrationService.migrate();
         await Promise.all([fetchProducts(), fetchSession()]);
       } catch (e) {
@@ -451,8 +450,27 @@ export default function App() {
             animate={{ opacity: 1, y: 0 }}
             exit={{ opacity: 0, y: -10 }}
           >
-            <h2 className="text-lg font-black mb-6">Más</h2>
-            <div className="space-y-3">
+            <h2 className="text-lg font-black mb-4">Más</h2>
+
+            <button
+              onClick={() => setShowCloseSessionConfirm(true)}
+              className="w-full p-5 mb-6 bg-gradient-to-br from-rose-500 to-rose-600 rounded-2xl text-left active:scale-95 transition-transform shadow-lg shadow-rose-200"
+            >
+              <div className="flex items-center gap-4">
+                <div className="w-12 h-12 rounded-xl bg-white/20 flex items-center justify-center shrink-0">
+                  <Lock size={24} className="text-white" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="font-black text-lg text-white">Cerrar Jornada</div>
+                  <div className="text-[12px] text-rose-100">Finaliza la jornada actual y genera un reporte</div>
+                </div>
+                <div className="w-8 h-8 rounded-full bg-white/20 flex items-center justify-center shrink-0">
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="white" strokeWidth="2.5" strokeLinecap="round"><path d="M9 18l6-6-6-6"/></svg>
+                </div>
+              </div>
+            </button>
+
+            <div className="space-y-2">
               <button
                 onClick={() => handleMasSelect('reportes')}
                 className="flex items-center gap-4 w-full p-4 bg-white rounded-2xl border border-stone-200 text-left active:scale-95 transition-transform min-h-[56px]"
@@ -475,18 +493,6 @@ export default function App() {
                 <div>
                   <div className="font-bold text-stone-800">Historial de ventas</div>
                   <div className="text-[11px] text-stone-500">Ventas agrupadas por jornada</div>
-                </div>
-              </button>
-              <button
-                onClick={() => setShowCloseSessionConfirm(true)}
-                className="flex items-center gap-4 w-full p-4 bg-white rounded-2xl border border-stone-200 text-left active:scale-95 transition-transform min-h-[56px]"
-              >
-                <div className="w-10 h-10 rounded-xl bg-rose-50 text-rose-600 flex items-center justify-center shrink-0">
-                  <Lock size={20} />
-                </div>
-                <div>
-                  <div className="font-bold text-stone-800">Cerrar Jornada</div>
-                  <div className="text-[11px] text-stone-500">Finalizar la jornada actual</div>
                 </div>
               </button>
               <button
@@ -606,6 +612,14 @@ export default function App() {
         profilePhoto={profilePhoto}
         onClose={() => setShowSettings(false)}
         onSettingsChange={handleSettingsChange}
+      />
+
+      <FirstLaunchTutorial
+        isOpen={showTutorial}
+        onComplete={() => {
+          setShowTutorial(false);
+          api.saveSetting('tutorial_completed', 'true');
+        }}
       />
     </div>
   );
