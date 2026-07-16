@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { motion, AnimatePresence } from 'motion/react';
-import { LayoutDashboard, List, ShoppingCart, Lock, ChevronRight, Check } from 'lucide-react';
+import { LayoutDashboard, List, ShoppingCart, Package, MoreHorizontal, ChevronRight, Check } from 'lucide-react';
 
 interface TutorialStep {
   icon: React.ReactNode;
@@ -17,21 +17,33 @@ const steps: TutorialStep[] = [
     color: 'bg-violet-500',
   },
   {
+    icon: <LayoutDashboard size={32} />,
+    title: 'Dashboard',
+    description: 'Al abrir la app ves el Dashboard con las ventas del día, totales, productos más vendidos y alertas de stock bajo. Todo de un vistazo.',
+    color: 'bg-violet-500',
+  },
+  {
     icon: <List size={32} />,
-    title: 'Catálogo y Ventas',
-    description: 'Agrega productos al carrito desde el catálogo. Filtra por categoría o busca por nombre para vender rápido.',
+    title: 'Catálogo',
+    description: 'Explora todos tus productos. Filtra por categoría, busca por nombre y agrega directo al carrito desde aquí.',
     color: 'bg-blue-500',
   },
   {
     icon: <ShoppingCart size={32} />,
     title: 'Carrito y Pagos',
-    description: 'Revisa los productos seleccionados, elige método de pago (efectivo, transferencia o split) y completa la venta.',
+    description: 'Revisa los productos seleccionados, ajusta cantidades y elige método de pago: efectivo, transferencia o split. La venta se registra automáticamente.',
     color: 'bg-emerald-500',
   },
   {
-    icon: <Lock size={32} />,
-    title: 'Cierre de Jornada',
-    description: 'Al final del día, cierra la jornada desde la sección "Más". Esto bloquea las ventas y genera un reporte para tu control.',
+    icon: <Package size={32} />,
+    title: 'Inventario',
+    description: 'Lleva el control de tu stock. Puedes agregar, editar o eliminar productos, y registrar movimientos de entrada y salida.',
+    color: 'bg-amber-500',
+  },
+  {
+    icon: <MoreHorizontal size={32} />,
+    title: 'Más — Cierre de Jornada',
+    description: 'Encontrarás Reportes, Historial de ventas, Exportar/Importar datos y Ajustes. Lo más importante: al final del día cierra la jornada para generar tu reporte de ventas.',
     color: 'bg-rose-500',
   },
 ];
