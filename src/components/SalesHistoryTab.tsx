@@ -129,7 +129,7 @@ export function SalesHistoryTab({ products, businessName = 'Fluxxi', currencySym
             <div className="flex items-center gap-2">
               <h2 className="text-lg font-black">{selectedSession.name || `Jornada #${selectedSession.id}`}</h2>
               {isActiveSession(selectedSession) && (
-                <span className="text-[9px] font-black uppercase bg-emerald-200 text-emerald-800 px-1.5 py-0.5 rounded-full">Activa</span>
+                <span className="text-[9px] font-black uppercase bg-violet-200 text-violet-800 px-1.5 py-0.5 rounded-full">Activa</span>
               )}
             </div>
             <p className="text-xs text-stone-500">

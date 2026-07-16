@@ -19,6 +19,7 @@ import { PaymentModal } from './components/PaymentModal';
 import { SettingsModal } from './components/SettingsModal';
 import { Modal } from './components/Modal';
 import { Haptics, ImpactStyle } from '@capacitor/haptics';
+import { SplashScreen } from '@capacitor/splash-screen';
 import { App as CapacitorApp } from '@capacitor/app';
 import { Filesystem, Directory } from '@capacitor/filesystem';
 import { Capacitor } from '@capacitor/core';
@@ -113,6 +114,7 @@ export default function App() {
         console.error("Error initializing app:", e);
       } finally {
         setIsLoading(false);
+        SplashScreen.hide();
       }
     };
     init();
@@ -527,7 +529,7 @@ export default function App() {
             {profilePhoto ? (
               <img src={profilePhoto} alt="" className="w-9 h-9 rounded-full object-cover shrink-0" />
             ) : (
-              <div className="w-9 h-9 rounded-full bg-emerald-100 text-emerald-700 text-sm font-bold flex items-center justify-center shrink-0">
+              <div className="w-9 h-9 rounded-full bg-violet-100 text-violet-700 text-sm font-bold flex items-center justify-center shrink-0">
                 {initial}
               </div>
             )}
@@ -535,7 +537,7 @@ export default function App() {
             <Settings size={16} className="text-stone-400 shrink-0 -ml-1" />
           </button>
           <div className="flex items-center gap-2">
-            <div className="w-3 h-3 rounded-full bg-emerald-500" />
+            <div className="w-3 h-3 rounded-full bg-violet-500" />
             <span className="text-xs font-medium uppercase tracking-widest text-stone-500">
               {tabLabels[activeTab]}
             </span>

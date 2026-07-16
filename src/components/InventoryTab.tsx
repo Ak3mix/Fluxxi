@@ -278,7 +278,7 @@ export function InventoryTab({ products, loading = false, onUpdate, lowStockThre
                           </div>
                           <div className={cn("mt-1.5 w-16 h-1.5 rounded-full overflow-hidden", isCritical ? "bg-rose-100" : isLow ? "bg-amber-100" : "bg-stone-100")}>
                             <div
-                              className={cn("h-full rounded-full transition-all", isCritical ? "bg-rose-400" : isLow ? "bg-amber-400" : "bg-emerald-500")}
+                              className={cn("h-full rounded-full transition-all", isCritical ? "bg-rose-400" : isLow ? "bg-amber-400" : "bg-violet-500")}
                               style={{ width: `${barPct}%` }}
                             />
                           </div>
